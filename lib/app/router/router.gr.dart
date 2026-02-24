@@ -57,3 +57,19 @@ class HomeRoute extends PageRouteInfo<void> {
     },
   );
 }
+
+/// generated route for
+/// [PhotoFeatureWrapper]
+class PhotoFeatureRouteWrapper extends PageRouteInfo<void> {
+  const PhotoFeatureRouteWrapper({List<PageRouteInfo>? children})
+    : super(PhotoFeatureRouteWrapper.name, initialChildren: children);
+
+  static const String name = 'PhotoFeatureRouteWrapper';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return WrappedRoute(child: const PhotoFeatureWrapper());
+    },
+  );
+}
