@@ -1,5 +1,7 @@
-import 'package:auto_route/auto_route.dart' show RoutePage;
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+
+import '../widgets/camera/index.dart' show CameraWidget;
 
 @RoutePage()
 class CameraScreen extends StatelessWidget {
@@ -7,9 +9,18 @@ class CameraScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: Text('New photo')),
-      body: SafeArea(child: Center(child: Text('Camera screen'))),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text('New photo'),
+        elevation: 0,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor?.withValues(alpha: 0.3) ??
+            Colors.black.withValues(alpha: 0.3),
+      ),
+      body: const CameraWidget(),
     );
   }
 }

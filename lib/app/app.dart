@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'router/router.dart';
+import 'theme/index.dart' show TAppTheme;
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -13,7 +14,7 @@ class App extends StatelessWidget {
       routerConfig: router.config(),
       debugShowCheckedModeBanner: false,
       title: 'Photo App',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      theme: TAppTheme.lightTheme(),
     );
   }
 }

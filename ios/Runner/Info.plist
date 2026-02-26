@@ -4,6 +4,10 @@
 <dict>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to take photos</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access to access camera</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app needs photo library access to select images</string>
 	<key>NSPhotoLibraryUsageDescription</key>
   	<string>This app needs photo library access to select images</string>
 	<key>CFBundleDevelopmentRegion</key>

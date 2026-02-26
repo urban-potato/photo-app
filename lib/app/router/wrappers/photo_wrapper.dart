@@ -19,7 +19,7 @@ class PhotoFeatureWrapper extends StatelessWidget implements AutoRouteWrapper {
 
     return BlocProvider<PhotoCubit>(
       create: (context) =>
-          PhotoCubit(photoRepository: photoRepository)..loadPhotos(),
+          PhotoCubit(photoRepository: photoRepository)..loadPhotoPaths(),
       child: this,
     );
   }
