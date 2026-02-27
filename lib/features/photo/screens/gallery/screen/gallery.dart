@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../app/router/router.dart' show PictureRoute;
 import '../../../provider/index.dart';
 
 @RoutePage()
@@ -23,7 +24,7 @@ class GalleryScreen extends StatelessWidget {
         child: const Icon(Icons.camera_alt_rounded),
       ),
       body: SafeArea(
-        top: false,
+        // top: false,
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
@@ -87,7 +88,6 @@ class _GalleryBody extends StatelessWidget {
       itemCount: photoPathsList.length,
       itemBuilder: (context, index) {
         final imagePath = File(photoPathsList[index]);
-        print(MediaQuery.of(context).size.width);
         return DecoratedBox(
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
           child: SizedBox(
@@ -95,7 +95,25 @@ class _GalleryBody extends StatelessWidget {
             width: MediaQuery.of(context).size.width * 0.5,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12.0),
-              child: Image.file(imagePath, fit: BoxFit.cover),
+
+              child: Hero(
+                tag: imagePath.path,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Ink.image(
+                    image: FileImage(imagePath),
+                    fit: BoxFit.cover,
+                    child: InkWell(
+                      onTap: () {
+                        // TODO: избавиться от импорта роутера из слоя app
+                        context.router.push(
+                          PictureRoute(picturePath: imagePath.path),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         );

@@ -26,6 +26,9 @@ class PhotoFeatureWrapper extends StatelessWidget implements AutoRouteWrapper {
 
   @override
   Widget build(BuildContext context) {
-    return const AutoRouter();
+    return HeroControllerScope(
+      controller: HeroController(),
+      child: const AutoRouter(),
+    );
   }
 }

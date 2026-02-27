@@ -73,3 +73,50 @@ class PhotoFeatureRouteWrapper extends PageRouteInfo<void> {
     },
   );
 }
+
+/// generated route for
+/// [PictureScreen]
+class PictureRoute extends PageRouteInfo<PictureRouteArgs> {
+  PictureRoute({
+    Key? key,
+    required String picturePath,
+    List<PageRouteInfo>? children,
+  }) : super(
+         PictureRoute.name,
+         args: PictureRouteArgs(key: key, picturePath: picturePath),
+         initialChildren: children,
+       );
+
+  static const String name = 'PictureRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<PictureRouteArgs>();
+      return PictureScreen(key: args.key, picturePath: args.picturePath);
+    },
+  );
+}
+
+class PictureRouteArgs {
+  const PictureRouteArgs({this.key, required this.picturePath});
+
+  final Key? key;
+
+  final String picturePath;
+
+  @override
+  String toString() {
+    return 'PictureRouteArgs{key: $key, picturePath: $picturePath}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! PictureRouteArgs) return false;
+    return key == other.key && picturePath == other.picturePath;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ picturePath.hashCode;
+}
