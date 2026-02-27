@@ -1,6 +1,5 @@
 import 'dart:developer';
 import 'dart:io';
-import 'dart:typed_data' show Uint8List;
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,21 +12,28 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   CameraController? _controller;
   List<CameraDescription> _cameras = [];
   int _selectedIndex = 1;
+  bool _hasFlashSupport = true;
+
+  CameraController? get controller => _controller;
 
   CameraCubit() : super(const CameraInitial()) {
     WidgetsBinding.instance.addObserver(this);
     _setupCamera(_selectedIndex);
   }
 
+  void _safeEmit(CameraState state) {
+    if (!isClosed) emit(state);
+  }
+
   Future<void> _setupCamera(int index) async {
     if (isClosed) return;
-    emit(const CameraLoading());
+    _safeEmit(const CameraLoading());
 
     final status = await Permission.camera.request();
     if (isClosed) return;
 
     if (!status.isGranted) {
-      if (!isClosed) emit(const CameraPermissionDenied());
+      _safeEmit(const CameraPermissionDenied());
       return;
     }
 
@@ -37,11 +43,9 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
         if (isClosed) return;
 
         if (_cameras.isEmpty) {
-          if (!isClosed) {
-            emit(
-              const CameraFailure(errorTtype: CameraErrorType.noCamerasFound),
-            );
-          }
+          _safeEmit(
+            const CameraFailure(errorTtype: CameraErrorType.noCamerasFound),
+          );
           return;
         }
       }
@@ -50,47 +54,147 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       await _controller?.dispose();
       if (isClosed) return;
 
-      _controller = CameraController(
+      final newController = CameraController(
         _cameras[targetIndex],
         ResolutionPreset.high,
       );
+      _controller = newController;
 
-      await _controller?.initialize();
-      if (isClosed) return;
+      await newController.initialize();
+      if (_controller != newController || isClosed) return;
 
       _selectedIndex = targetIndex;
+      _hasFlashSupport =
+          _cameras[targetIndex].lensDirection == CameraLensDirection.back;
 
-      if (!isClosed) {
-        emit(CameraReady(controller: _controller!));
+      if (_hasFlashSupport) {
+        try {
+          await newController.setFlashMode(FlashMode.off);
+          if (_controller != newController || isClosed) return;
+        } catch (e) {
+          log('Flash error: $e');
+        }
       }
     } catch (e) {
-      if (!isClosed) {
-        log('Error initializing camera: $e');
-        emit(
-          const CameraFailure(errorTtype: CameraErrorType.initializationFailed),
-        );
-      }
+      log('Error initializing camera: $e');
+      _safeEmit(
+        const CameraFailure(errorTtype: CameraErrorType.initializationFailed),
+      );
+      return;
     }
+
+    _safeEmit(CameraReady(hasFlashSupport: _hasFlashSupport));
   }
 
   Future<void> switchCamera() async {
     if (_cameras.isEmpty) return;
     final newIndex = (_selectedIndex + 1) % _cameras.length;
+    _hasFlashSupport = true;
     await _setupCamera(newIndex);
+  }
+
+  Future<void> switchFlash() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+
+    if (!_hasFlashSupport) {
+      final currentState = state;
+      if (currentState is! CameraReady) return;
+      _safeEmit(
+        CameraReady(
+          isFlashOn: currentState.isFlashOn,
+          hasFlashSupport: false,
+          warningMessage: 'No flash available on this camera',
+        ),
+      );
+      return;
+    }
+
+    try {
+      if (!controller.value.isInitialized) {
+        return;
+      }
+      final currentMode = controller.value.flashMode;
+      final newMode = currentMode == FlashMode.always
+          ? FlashMode.off
+          : FlashMode.always;
+      final newIsFlashOn = newMode == FlashMode.always;
+
+      await controller.setFlashMode(newMode);
+
+      if (controller != _controller || isClosed) {
+        log('Flash switch ignored: controller changed or cubit closed');
+        return;
+      }
+
+      final actualMode = controller.value.flashMode;
+      if (actualMode != newMode) {
+        log('Flash not applied: likely no support');
+        _hasFlashSupport = false;
+        _safeEmit(
+          const CameraReady(
+            isFlashOn: false,
+            hasFlashSupport: false,
+            warningMessage: 'No flash available on this camera',
+          ),
+        );
+        return;
+      }
+      log('Actual mode after set: $actualMode vs new: $newMode');
+
+      _safeEmit(
+        CameraReady(isFlashOn: newIsFlashOn, hasFlashSupport: _hasFlashSupport),
+      );
+    } on CameraException catch (e) {
+      log('Flash error: $e');
+      if (controller != _controller || isClosed) return;
+
+      _hasFlashSupport = false;
+      _safeEmit(
+        const CameraReady(
+          isFlashOn: false,
+          hasFlashSupport: false,
+          warningMessage: 'No flash available on this camera',
+        ),
+      );
+    } catch (e) {
+      log('Error switching flash: $e');
+      if (e.toString().contains('disposed') || e is StateError) {
+        log('Ignored error on disposed controller');
+        return;
+      }
+
+      final currentState = state;
+      if (currentState is! CameraReady) return;
+      _safeEmit(
+        CameraReady(
+          isFlashOn: currentState.isFlashOn,
+          hasFlashSupport: currentState.hasFlashSupport,
+          warningMessage: 'Something went wrong',
+        ),
+      );
+    }
   }
 
   Future<String?> takePicture() async {
     final controller = _controller;
-    if (controller == null || !(controller.value.isInitialized)) {
+    if (controller == null || !controller.value.isInitialized) {
       return null;
     }
+    if (controller.value.isTakingPicture) return null;
 
     try {
-      final XFile picture = await controller.takePicture();
-      final Uint8List bytes = await picture.readAsBytes();
+      final picture = await controller.takePicture();
+      if (controller != _controller || isClosed) {
+        log('Picture ignored: controller changed or cubit closed');
+        return null;
+      }
+      final bytes = await picture.readAsBytes();
+      if (controller != _controller || isClosed) return null;
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-
       final appDir = await getApplicationDocumentsDirectory();
       final photosDir = Directory('${appDir.path}/photos');
       final isDirExists = await photosDir.exists();
@@ -120,18 +224,32 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      _controller?.dispose();
-      _controller = null;
+      _handlePause();
     } else if (state == AppLifecycleState.resumed) {
-      _setupCamera(_selectedIndex);
+      _handleResume();
     }
+  }
+
+  Future<void> _handlePause() async {
+    final controller = _controller;
+    _controller = null;
+    await controller?.dispose();
+  }
+
+  Future<void> _handleResume() async {
+    await _setupCamera(_selectedIndex);
   }
 
   @override
   Future<void> close() async {
     WidgetsBinding.instance.removeObserver(this);
-    await _controller?.dispose();
-    _controller = null;
+
+    final controller = _controller;
+    await controller?.dispose();
+
+    if (_controller == controller) {
+      _controller = null;
+    }
     await super.close();
   }
 }

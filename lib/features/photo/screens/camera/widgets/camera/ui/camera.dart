@@ -16,7 +16,14 @@ class CameraWidget extends StatelessWidget {
 
     return BlocProvider(
       create: (_) => CameraCubit(),
-      child: BlocBuilder<CameraCubit, CameraState>(
+      child: BlocConsumer<CameraCubit, CameraState>(
+        listener: (context, state) {
+          if (state is CameraReady && state.warningMessage != null) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.warningMessage!)));
+          }
+        },
         builder: (context, state) {
           if (state is CameraPermissionDenied) {
             return Center(
@@ -54,9 +61,22 @@ class CameraWidget extends StatelessWidget {
           }
 
           if (state is CameraReady) {
+            final flashIcon = state.isFlashOn
+                ? Icons.flash_on_rounded
+                : Icons.flash_off_rounded;
+            final hasFlash = state.hasFlashSupport;
+            final flashColor = hasFlash ? null : Colors.grey;
+
+            final cubit = context.read<CameraCubit>();
+            final controller = cubit.controller;
+
+            if (controller == null) {
+              return const Center(child: Text('Woops, something went wrong'));
+            }
+
             return Stack(
               children: [
-                SizedBox.expand(child: CameraPreview(state.controller)),
+                SizedBox.expand(child: CameraPreview(controller)),
                 Positioned(
                   bottom: 0,
                   left: 0,
@@ -77,9 +97,11 @@ class CameraWidget extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  onPressed: () => context
-                                      .read<CameraCubit>()
-                                      .switchCamera(),
+                                  onPressed: () async {
+                                    await context
+                                        .read<CameraCubit>()
+                                        .switchCamera();
+                                  },
                                   icon: const Icon(Icons.cameraswitch_rounded),
                                 ),
                                 IconButton(
@@ -116,8 +138,15 @@ class CameraWidget extends StatelessWidget {
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: IconButton(
-                              onPressed: () {},
-                              icon: const Icon(Icons.flash_on_rounded),
+                              onPressed: hasFlash
+                                  ? () async {
+                                      await context
+                                          .read<CameraCubit>()
+                                          .switchFlash();
+                                    }
+                                  : null,
+                              icon: Icon(flashIcon),
+                              color: flashColor,
                             ),
                           ),
                         ),
