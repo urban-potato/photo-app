@@ -17,6 +17,9 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   bool _hasFlashSupport = true;
 
+  bool _isRequestingPermission = false;
+  bool _permissionDialogCausedPause = false;
+
   CameraController? get controller => _controller;
 
   CameraCubit() : super(const CameraInitial()) {
@@ -67,15 +70,33 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     if (isClosed) return;
     _safeEmit(const CameraLoading());
 
-    final status = await Permission.camera.request();
-    if (isClosed) return;
-
-    if (!status.isGranted) {
-      _safeEmit(const CameraPermissionDenied());
-      return;
-    }
-
     try {
+      _isRequestingPermission = true;
+      final cameraStatus = await Permission.camera.request();
+      if (isClosed) return;
+      _isRequestingPermission = false;
+
+      if (!cameraStatus.isGranted) {
+        _safeEmit(
+          const CameraPermissionDenied(permissionType: PermissionType.camera),
+        );
+        return;
+      }
+
+      _isRequestingPermission = true;
+      final audioStatus = await Permission.microphone.request();
+      if (isClosed) return;
+      _isRequestingPermission = false;
+
+      if (!audioStatus.isGranted) {
+        _safeEmit(
+          const CameraPermissionDenied(
+            permissionType: PermissionType.microphone,
+          ),
+        );
+        return;
+      }
+
       if (_cameras.isEmpty) {
         _cameras = await availableCameras();
         if (isClosed) return;
@@ -113,6 +134,25 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
           log('Flash error: $e');
         }
       }
+    } on CameraException catch (e) {
+      log('Camera exception: $e');
+      if (e.code == 'AudioAccessDenied') {
+        final audioStatus = await Permission.microphone.status;
+        if (isClosed) return;
+
+        if (!audioStatus.isGranted) {
+          _safeEmit(
+            const CameraPermissionDenied(
+              permissionType: PermissionType.microphone,
+            ),
+          );
+        }
+        return;
+      }
+
+      _safeEmit(
+        const CameraFailure(errorTtype: CameraErrorType.initializationFailed),
+      );
     } catch (e) {
       log('Error initializing camera: $e');
       _safeEmit(
@@ -216,7 +256,6 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     }
   }
 
-  // Future<String?> takePicture() async {
   Future<void> takePicture(void Function(String path) savePicture) async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized) {
@@ -246,7 +285,6 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       final file = File(path);
       await file.writeAsBytes(bytes);
 
-      // return path;
       savePicture(path);
     } catch (e) {
       log('Failed to capture photo: $e');
@@ -256,6 +294,10 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
   Future<void> retryInitialization() async {
     await _setupCamera(_selectedIndex);
+  }
+
+  Future<void> grantPermissionInSettings() async {
+    await openAppSettings();
   }
 
   @override
@@ -271,12 +313,21 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   }
 
   Future<void> _handlePause() async {
+    if (_isRequestingPermission) {
+      _permissionDialogCausedPause = true;
+    }
+
     final controller = _controller;
     _controller = null;
     await controller?.dispose();
   }
 
   Future<void> _handleResume() async {
+    if (_permissionDialogCausedPause) {
+      _permissionDialogCausedPause = false;
+      return;
+    }
+
     await _setupCamera(_selectedIndex);
   }
 

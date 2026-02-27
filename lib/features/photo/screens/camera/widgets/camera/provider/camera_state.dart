@@ -16,7 +16,9 @@ class CameraLoading extends CameraState {
 }
 
 class CameraPermissionDenied extends CameraState {
-  const CameraPermissionDenied();
+  final PermissionType permissionType;
+
+  const CameraPermissionDenied({required this.permissionType});
 }
 
 class CameraReady extends CameraState {
@@ -54,3 +56,5 @@ class CameraFailure extends CameraState {
 }
 
 enum CameraErrorType { noCamerasFound, initializationFailed, generic }
+
+enum PermissionType { camera, microphone }

@@ -66,7 +66,7 @@ class GalleryScreen extends StatelessWidget {
                 if (state.photoPathsList != null) {
                   if (state.photoPathsList!.isEmpty) {
                     return const SliverFillRemaining(
-                      child: Center(child: Text('No photos yet.')),
+                      child: Center(child: Text('No photos yet')),
                     );
                   }
                   return SliverPadding(
@@ -111,10 +111,8 @@ class _GalleryBody extends StatelessWidget {
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
           child: SizedBox(
             height: MediaQuery.of(context).size.height * 0.25,
-            width: MediaQuery.of(context).size.width * 0.5,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12.0),
-
               child: Hero(
                 tag: imagePath.path,
                 child: Material(
