@@ -1,8 +1,11 @@
 import 'dart:io' show File;
 
-import 'package:auto_route/auto_route.dart' show RoutePage;
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:photo_view/photo_view.dart';
+
+import '../../../provider/index.dart' show PhotoCubit;
 
 @RoutePage()
 class PictureScreen extends StatelessWidget {
@@ -13,7 +16,20 @@ class PictureScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Picture')),
+      appBar: AppBar(
+        title: const Text('Picture'),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              final cubit = context.read<PhotoCubit>();
+              final router = context.router;
+              await cubit.deletePhotoPath(picturePath);
+              router.pop();
+            },
+            icon: const Icon(Icons.delete_rounded),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: PhotoView(

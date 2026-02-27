@@ -14,6 +14,7 @@ class PhotoCubit extends Cubit<PhotoState> {
   Future<void> loadPhotoPaths() async {
     final photoPathsList = state.photoPathsList;
     emit(PhotoLoading(photoPathsList: photoPathsList));
+
     final dataState = await _photoRepository.getAllPhotoPaths();
     if (isClosed) return;
 
@@ -26,7 +27,11 @@ class PhotoCubit extends Cubit<PhotoState> {
       case (DataFailed _):
         {
           final error = (dataState as DataFailed).error;
-          emit(PhotoFailure(error: error));
+          final typedError = TypedError(
+            type: PhotoErrorType.load,
+            error: error,
+          );
+          emit(PhotoFailure(error: typedError, photoPathsList: photoPathsList));
           return;
         }
     }
@@ -35,6 +40,7 @@ class PhotoCubit extends Cubit<PhotoState> {
   Future<void> addPhotoPath(String photoPath) async {
     final photoPathsList = state.photoPathsList;
     emit(PhotoLoading(photoPathsList: photoPathsList));
+
     final dataState = await _photoRepository.savePhotoPath(photoPath);
     if (isClosed) return;
 
@@ -47,7 +53,11 @@ class PhotoCubit extends Cubit<PhotoState> {
       case (DataFailed _):
         {
           final error = (dataState as DataFailed).error;
-          emit(PhotoFailure(error: error));
+          final typedError = TypedError(
+            type: PhotoErrorType.save,
+            error: error,
+          );
+          emit(PhotoFailure(error: typedError, photoPathsList: photoPathsList));
           return;
         }
     }
@@ -56,6 +66,7 @@ class PhotoCubit extends Cubit<PhotoState> {
   Future<void> deletePhotoPath(String photoPath) async {
     final photoPathsList = state.photoPathsList;
     emit(PhotoLoading(photoPathsList: photoPathsList));
+
     final dataState = await _photoRepository.deletePhotoPath(photoPath);
     if (isClosed) return;
 
@@ -68,7 +79,11 @@ class PhotoCubit extends Cubit<PhotoState> {
       case (DataFailed _):
         {
           final error = (dataState as DataFailed).error;
-          emit(PhotoFailure(error: error));
+          final typedError = TypedError(
+            type: PhotoErrorType.delete,
+            error: error,
+          );
+          emit(PhotoFailure(error: typedError, photoPathsList: photoPathsList));
           return;
         }
     }

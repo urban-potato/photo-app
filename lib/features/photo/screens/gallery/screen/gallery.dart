@@ -42,7 +42,26 @@ class GalleryScreen extends StatelessWidget {
               title: Text('My photos'),
             ),
 
-            BlocBuilder<PhotoCubit, PhotoState>(
+            BlocConsumer<PhotoCubit, PhotoState>(
+              listener: (context, state) {
+                if (state is PhotoFailure) {
+                  final stateError = state.error;
+                  if (stateError == null) return;
+
+                  final message = switch (stateError.type) {
+                    PhotoErrorType.load =>
+                      'Error loading photos. Please try again',
+                    PhotoErrorType.save =>
+                      'Error saving photo. Please try again',
+                    PhotoErrorType.delete =>
+                      'Error deleting photo. Please try again',
+                  };
+
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(message)));
+                }
+              },
               builder: (context, state) {
                 if (state.photoPathsList != null) {
                   if (state.photoPathsList!.isEmpty) {

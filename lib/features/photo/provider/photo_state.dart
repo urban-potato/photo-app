@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 abstract class PhotoState extends Equatable {
   final List<String>? photoPathsList;
-  final Exception? error;
+  final TypedError? error;
 
   const PhotoState({this.photoPathsList, this.error});
 
@@ -23,5 +23,14 @@ class PhotoLoaded extends PhotoState {
 }
 
 class PhotoFailure extends PhotoState {
-  const PhotoFailure({super.error});
+  const PhotoFailure({required super.error, super.photoPathsList});
 }
+
+class TypedError {
+  final PhotoErrorType type;
+  final Exception? error;
+
+  TypedError({required this.type, required this.error});
+}
+
+enum PhotoErrorType { load, save, delete }
