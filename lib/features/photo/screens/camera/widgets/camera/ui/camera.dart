@@ -1,7 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../provider/index.dart' show PhotoCubit;
@@ -12,8 +11,6 @@ class CameraWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
     return BlocProvider(
       create: (_) => CameraCubit(),
       child: BlocConsumer<CameraCubit, CameraState>(
@@ -69,6 +66,15 @@ class CameraWidget extends StatelessWidget {
 
             final cubit = context.read<CameraCubit>();
             final controller = cubit.controller;
+            final seconds = state.secondsLeft;
+            // final isTimerActive = state.isTimerActive;
+            final timerColor = state.isTimerActive ? Colors.yellow : null;
+
+            void savePicture(String path) {
+              if (context.mounted) {
+                context.read<PhotoCubit>().addPhotoPath(path);
+              }
+            }
 
             if (controller == null) {
               return const Center(child: Text('Woops, something went wrong'));
@@ -105,8 +111,17 @@ class CameraWidget extends StatelessWidget {
                                   icon: const Icon(Icons.cameraswitch_rounded),
                                 ),
                                 IconButton(
-                                  onPressed: () {},
-                                  icon: const Icon(Icons.timer_rounded),
+                                  onPressed: () async {
+                                    await cubit.takeTimedPicture(savePicture);
+
+                                    if (context.mounted) {
+                                      context.router.pop();
+                                    }
+                                  },
+                                  icon: Icon(
+                                    Icons.timer_rounded,
+                                    color: timerColor,
+                                  ),
                                 ),
                               ],
                             ),
@@ -117,14 +132,10 @@ class CameraWidget extends StatelessWidget {
                           flex: 1,
                           child: IconButton(
                             onPressed: () async {
-                              final cubit = context.read<CameraCubit>();
-                              final path = await cubit.takePicture();
+                              await cubit.takePicture(savePicture);
 
-                              if (path != null && context.mounted) {
-                                context.read<PhotoCubit>().addPhotoPath(path);
-                                if (context.mounted) {
-                                  context.router.pop();
-                                }
+                              if (context.mounted) {
+                                context.router.pop();
                               }
                             },
                             icon: const Icon(Icons.camera),
@@ -154,6 +165,19 @@ class CameraWidget extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                ((seconds ?? 0) > 0)
+                    ? Center(
+                        child: Text(
+                          '$seconds',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.4),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 80,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ],
             );
           }

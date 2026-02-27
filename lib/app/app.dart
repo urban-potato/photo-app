@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemUiMode, SystemChrome;
 
 import 'router/router.dart';
 import 'theme/index.dart' show TAppTheme;
@@ -8,6 +9,8 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
     final router = AppRouter();
 
     return MaterialApp.router(

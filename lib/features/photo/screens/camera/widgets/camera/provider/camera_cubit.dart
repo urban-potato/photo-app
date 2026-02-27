@@ -9,9 +9,12 @@ import 'package:path_provider/path_provider.dart';
 import 'camera_state.dart';
 
 class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
+  static const int countDownSeconds = 3;
+  static const int countDownPeriod = 1;
+
   CameraController? _controller;
   List<CameraDescription> _cameras = [];
-  int _selectedIndex = 1;
+  int _selectedIndex = 0;
   bool _hasFlashSupport = true;
 
   CameraController? get controller => _controller;
@@ -19,6 +22,41 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   CameraCubit() : super(const CameraInitial()) {
     WidgetsBinding.instance.addObserver(this);
     _setupCamera(_selectedIndex);
+  }
+
+  Future<void> takeTimedPicture(void Function(String path) savePicture) async {
+    int secondsLeft = countDownSeconds;
+
+    while (secondsLeft > 0) {
+      final currentState = state;
+      if (currentState is! CameraReady || isClosed) {
+        return;
+      }
+
+      _safeEmit(
+        CameraReady(
+          hasFlashSupport: currentState.hasFlashSupport,
+          isFlashOn: currentState.isFlashOn,
+          secondsLeft: secondsLeft,
+          isTimerActive: true,
+        ),
+      );
+
+      await Future.delayed(const Duration(seconds: countDownPeriod));
+      secondsLeft -= countDownPeriod;
+    }
+
+    final currentState = state;
+    if (currentState is! CameraReady || isClosed) return;
+    _safeEmit(
+      CameraReady(
+        hasFlashSupport: currentState.hasFlashSupport,
+        isFlashOn: currentState.isFlashOn,
+        secondsLeft: secondsLeft,
+      ),
+    );
+
+    await takePicture(savePicture);
   }
 
   void _safeEmit(CameraState state) {
@@ -178,21 +216,22 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     }
   }
 
-  Future<String?> takePicture() async {
+  // Future<String?> takePicture() async {
+  Future<void> takePicture(void Function(String path) savePicture) async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized) {
-      return null;
+      return;
     }
-    if (controller.value.isTakingPicture) return null;
+    if (controller.value.isTakingPicture) return;
 
     try {
       final picture = await controller.takePicture();
       if (controller != _controller || isClosed) {
         log('Picture ignored: controller changed or cubit closed');
-        return null;
+        return;
       }
       final bytes = await picture.readAsBytes();
-      if (controller != _controller || isClosed) return null;
+      if (controller != _controller || isClosed) return;
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final appDir = await getApplicationDocumentsDirectory();
@@ -207,10 +246,11 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       final file = File(path);
       await file.writeAsBytes(bytes);
 
-      return path;
+      // return path;
+      savePicture(path);
     } catch (e) {
       log('Failed to capture photo: $e');
-      return null;
+      return;
     }
   }
 

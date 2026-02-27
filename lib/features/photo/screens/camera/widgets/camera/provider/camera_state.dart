@@ -1,4 +1,3 @@
-// import 'package:camera/camera.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class CameraState extends Equatable {
@@ -23,16 +22,26 @@ class CameraPermissionDenied extends CameraState {
 class CameraReady extends CameraState {
   final bool isFlashOn;
   final bool hasFlashSupport;
+  final bool isTimerActive;
+  final int? secondsLeft;
   final String? warningMessage;
 
   const CameraReady({
     this.isFlashOn = false,
     this.hasFlashSupport = true,
+    this.isTimerActive = false,
+    this.secondsLeft,
     this.warningMessage,
   });
 
   @override
-  List<Object?> get props => [isFlashOn, hasFlashSupport, warningMessage];
+  List<Object?> get props => [
+    isFlashOn,
+    hasFlashSupport,
+    warningMessage,
+    secondsLeft,
+    isTimerActive,
+  ];
 }
 
 class CameraFailure extends CameraState {
