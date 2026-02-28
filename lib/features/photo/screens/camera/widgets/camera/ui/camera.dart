@@ -57,6 +57,7 @@ class CameraWidget extends StatelessWidget {
             final isTimerActive = state.isTimerActive;
             final secondsLeft = state.secondsLeft;
             final controller = cameraCubit.controller;
+            // final messenger = ScaffoldMessenger.of(context);
 
             if (controller == null) {
               return ErrorStateView.noController(
@@ -69,13 +70,27 @@ class CameraWidget extends StatelessWidget {
             }
 
             Future<void> takeTimedPicture() async {
-              await cameraCubit.takeTimedPicture(savePicture);
-              router.pop();
+              final isPictureTaken = await cameraCubit.takeTimedPicture(
+                savePicture,
+              );
+              if (isPictureTaken) {
+                router.pop();
+              } else {
+                // messenger.showSnackBar(
+                //   const SnackBar(content: Text('Error taking picture')),
+                // );
+              }
             }
 
             Future<void> takePicture() async {
-              await cameraCubit.takePicture(savePicture);
-              router.pop();
+              final isPictureTaken = await cameraCubit.takePicture(savePicture);
+              if (isPictureTaken) {
+                router.pop();
+              } else {
+                // messenger.showSnackBar(
+                //   const SnackBar(content: Text('Error taking picture')),
+                // );
+              }
             }
 
             final CountDownProps countDownProps = (secondsLeft: secondsLeft);

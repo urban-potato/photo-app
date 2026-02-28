@@ -25,9 +25,7 @@ class CameraView extends StatelessWidget {
           child: _CameraControls(cameraControlsProps),
         ),
 
-        ((countDownProps.secondsLeft ?? 0) > 0)
-            ? _CountdownDisplay(countDownProps)
-            : const SizedBox.shrink(),
+        _CountdownDisplay(countDownProps),
       ],
     );
   }
@@ -191,17 +189,19 @@ class _CountdownDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final secondsLeft = countDownProps.secondsLeft;
+    final secondsLeft = countDownProps.secondsLeft ?? 0;
 
-    return Center(
-      child: Text(
-        '$secondsLeft',
-        style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.4),
-          fontWeight: FontWeight.bold,
-          fontSize: 90,
-        ),
-      ),
-    );
+    return (secondsLeft > 0)
+        ? Center(
+            child: Text(
+              '$secondsLeft',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.4),
+                fontWeight: FontWeight.bold,
+                fontSize: 90,
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
   }
 }
