@@ -11,13 +11,15 @@ class PhotoRepository implements PhotoRepositoryI {
     required this.talker,
   }) : _prefs = preferencesAsync;
 
+  static const storageKey = 'photoPaths';
+
   final Talker talker;
   final SharedPreferencesAsync _prefs;
 
   @override
   Future<DataState<List<String>>> getAllPhotoPaths() async {
     try {
-      final photoPathsList = await _prefs.getStringList('photoPaths') ?? [];
+      final photoPathsList = await _prefs.getStringList(storageKey) ?? [];
       return DataSuccess(data: photoPathsList);
     } catch (e) {
       talker.error('PhotoRepository Failed to getAllPhotoPaths: $e');
@@ -30,9 +32,9 @@ class PhotoRepository implements PhotoRepositoryI {
   @override
   Future<DataState<List<String>>> savePhotoPath(String path) async {
     try {
-      final photoPathsList = await _prefs.getStringList('photoPaths') ?? [];
+      final photoPathsList = await _prefs.getStringList(storageKey) ?? [];
       photoPathsList.add(path);
-      await _prefs.setStringList('photoPaths', photoPathsList);
+      await _prefs.setStringList(storageKey, photoPathsList);
       return DataSuccess(data: photoPathsList);
     } catch (e) {
       talker.error('PhotoRepository Failed to savePhotoPath: $e');
@@ -45,13 +47,16 @@ class PhotoRepository implements PhotoRepositoryI {
   @override
   Future<DataState<List<String>>> deletePhotoPath(String path) async {
     try {
-      final photoPathsList = await _prefs.getStringList('photoPaths') ?? [];
+      final photoPathsList = await _prefs.getStringList(storageKey) ?? [];
       final result = photoPathsList.remove(path);
 
       if (result) {
-        await _prefs.setStringList('photoPaths', photoPathsList);
+        await _prefs.setStringList(storageKey, photoPathsList);
         return DataSuccess(data: photoPathsList);
       } else {
+        talker.warning(
+          'PhotoRepository Failed to deletePhotoPath: Path not found',
+        );
         return DataFailed(error: Exception('Path not found'));
       }
     } catch (e) {
