@@ -27,7 +27,9 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     _setupCamera(_selectedIndex);
   }
 
-  Future<void> takeTimedPicture(void Function(String path) savePicture) async {
+  Future<void> takeTimedPicture(
+    Future<void> Function(String path) savePicture,
+  ) async {
     int secondsLeft = countDownSeconds;
 
     while (secondsLeft > 0) {
@@ -256,7 +258,9 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> takePicture(void Function(String path) savePicture) async {
+  Future<void> takePicture(
+    Future<void> Function(String path) savePicture,
+  ) async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized) {
       return;
@@ -285,7 +289,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       final file = File(path);
       await file.writeAsBytes(bytes);
 
-      savePicture(path);
+      await savePicture(path);
     } catch (e) {
       log('Failed to capture photo: $e');
       return;
