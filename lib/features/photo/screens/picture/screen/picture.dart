@@ -15,16 +15,24 @@ class PictureScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final photoCubit = context.read<PhotoCubit>();
+    final router = context.router;
+    // final messenger = ScaffoldMessenger.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Picture'),
         actions: [
           IconButton(
             onPressed: () async {
-              final cubit = context.read<PhotoCubit>();
-              final router = context.router;
-              await cubit.deletePhotoPath(picturePath);
-              router.pop();
+              final isSuccess = await photoCubit.deletePhotoPath(picturePath);
+              if (isSuccess) {
+                router.pop();
+              } else {
+                // messenger.showSnackBar(
+                //   const SnackBar(content: Text('Error deleting picture')),
+                // );
+              }
             },
             icon: const Icon(Icons.delete_rounded),
           ),

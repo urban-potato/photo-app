@@ -11,16 +11,25 @@ class PhotoCubit extends Cubit<PhotoState> {
 
   final PhotoRepositoryI _photoRepository;
 
+  bool _isBusy = false;
+
   Future<void> loadPhotoPaths() async {
+    if (_isBusy) return;
+    _isBusy = true;
+
     final photoPathsList = state.photoPathsList;
     emit(PhotoLoading(photoPathsList: photoPathsList));
 
     final dataState = await _photoRepository.getAllPhotoPaths();
-    if (isClosed) return;
+    if (isClosed) {
+      _isBusy = false;
+      return;
+    }
 
     switch (dataState) {
       case (DataSuccess _):
         {
+          _isBusy = false;
           emit(PhotoLoaded(photoPathsList: dataState.data));
           return;
         }
@@ -31,6 +40,8 @@ class PhotoCubit extends Cubit<PhotoState> {
             type: PhotoErrorType.load,
             error: error,
           );
+
+          _isBusy = false;
           emit(PhotoFailure(error: typedError, photoPathsList: photoPathsList));
           return;
         }
@@ -38,15 +49,22 @@ class PhotoCubit extends Cubit<PhotoState> {
   }
 
   Future<void> addPhotoPath(String photoPath) async {
+    if (_isBusy) return;
+    _isBusy = true;
+
     final photoPathsList = state.photoPathsList;
     emit(PhotoLoading(photoPathsList: photoPathsList));
 
     final dataState = await _photoRepository.savePhotoPath(photoPath);
-    if (isClosed) return;
+    if (isClosed) {
+      _isBusy = false;
+      return;
+    }
 
     switch (dataState) {
       case (DataSuccess _):
         {
+          _isBusy = false;
           emit(PhotoLoaded(photoPathsList: dataState.data));
           return;
         }
@@ -57,24 +75,33 @@ class PhotoCubit extends Cubit<PhotoState> {
             type: PhotoErrorType.save,
             error: error,
           );
+
+          _isBusy = false;
           emit(PhotoFailure(error: typedError, photoPathsList: photoPathsList));
           return;
         }
     }
   }
 
-  Future<void> deletePhotoPath(String photoPath) async {
+  Future<bool> deletePhotoPath(String photoPath) async {
+    if (_isBusy) return false;
+    _isBusy = true;
+
     final photoPathsList = state.photoPathsList;
     emit(PhotoLoading(photoPathsList: photoPathsList));
 
     final dataState = await _photoRepository.deletePhotoPath(photoPath);
-    if (isClosed) return;
+    if (isClosed) {
+      _isBusy = false;
+      return false;
+    }
 
     switch (dataState) {
       case (DataSuccess _):
         {
+          _isBusy = false;
           emit(PhotoLoaded(photoPathsList: dataState.data));
-          return;
+          return true;
         }
       case (DataFailed _):
         {
@@ -83,8 +110,10 @@ class PhotoCubit extends Cubit<PhotoState> {
             type: PhotoErrorType.delete,
             error: error,
           );
+
+          _isBusy = false;
           emit(PhotoFailure(error: typedError, photoPathsList: photoPathsList));
-          return;
+          return false;
         }
     }
   }
