@@ -1,4 +1,3 @@
-import 'dart:developer' show log;
 import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
@@ -6,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../app/router/router.dart' show PictureRoute;
+import '../../../../../app/router/router.dart' show PictureRoute, CameraRoute;
 import '../../../provider/index.dart';
 
 @RoutePage()
@@ -15,16 +14,17 @@ class GalleryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final router = context.router;
+
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
         onPressed: () {
-          context.router.pushPath('camera');
+          router.push(const CameraRoute());
         },
         child: const Icon(Icons.camera_alt_rounded),
       ),
       body: SafeArea(
-        // top: false,
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
@@ -78,7 +78,6 @@ class GalleryScreen extends StatelessWidget {
                     sliver: _GalleryBody(photoPathsList: state.photoPathsList!),
                   );
                 } else if (state is PhotoFailure) {
-                  log('Error loading photos: ${state.error.toString()}');
                   return const SliverFillRemaining(
                     child: Center(child: Text('Error loading photos')),
                   );
@@ -106,7 +105,9 @@ class _GalleryBody extends StatelessWidget {
     return SliverList.separated(
       itemCount: photoPathsList.length,
       itemBuilder: (context, index) {
+        final router = context.router;
         final imagePath = File(photoPathsList[index]);
+
         return DecoratedBox(
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
           child: SizedBox(
@@ -122,10 +123,7 @@ class _GalleryBody extends StatelessWidget {
                     fit: BoxFit.cover,
                     child: InkWell(
                       onTap: () {
-                        // TODO: избавиться от импорта роутера из слоя app
-                        context.router.push(
-                          PictureRoute(picturePath: imagePath.path),
-                        );
+                        router.push(PictureRoute(picturePath: imagePath.path));
                       },
                     ),
                   ),

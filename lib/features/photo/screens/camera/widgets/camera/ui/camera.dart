@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:talker_flutter/talker_flutter.dart' show Talker;
 
 import '../../../../../provider/index.dart' show PhotoCubit;
 import '../provider/index.dart';
@@ -12,8 +13,10 @@ class CameraWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final talker = context.read<Talker>();
+
     return BlocProvider(
-      create: (_) => CameraCubit(),
+      create: (_) => CameraCubit(talker: talker),
 
       child: BlocConsumer<CameraCubit, CameraState>(
         listener: (context, state) {

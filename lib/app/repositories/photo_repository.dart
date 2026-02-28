@@ -1,13 +1,17 @@
 import 'package:shared_preferences/shared_preferences.dart'
     show SharedPreferencesAsync;
+import 'package:talker_flutter/talker_flutter.dart' show Talker;
 
 import '../../shared/data_state/data_state.dart';
 import '../../shared/repositories/photo_repository.dart';
 
 class PhotoRepository implements PhotoRepositoryI {
-  const PhotoRepository({required SharedPreferencesAsync preferencesAsync})
-    : _prefs = preferencesAsync;
+  const PhotoRepository({
+    required SharedPreferencesAsync preferencesAsync,
+    required this.talker,
+  }) : _prefs = preferencesAsync;
 
+  final Talker talker;
   final SharedPreferencesAsync _prefs;
 
   @override
@@ -16,6 +20,8 @@ class PhotoRepository implements PhotoRepositoryI {
       final photoPathsList = await _prefs.getStringList('photoPaths') ?? [];
       return DataSuccess(data: photoPathsList);
     } catch (e) {
+      talker.error('PhotoRepository Failed to getAllPhotoPaths: $e');
+
       final exeption = e is Exception ? e : Exception(e.toString());
       return DataFailed(error: exeption);
     }
@@ -29,6 +35,8 @@ class PhotoRepository implements PhotoRepositoryI {
       await _prefs.setStringList('photoPaths', photoPathsList);
       return DataSuccess(data: photoPathsList);
     } catch (e) {
+      talker.error('PhotoRepository Failed to savePhotoPath: $e');
+
       final exeption = e is Exception ? e : Exception(e.toString());
       return DataFailed(error: exeption);
     }
@@ -47,6 +55,8 @@ class PhotoRepository implements PhotoRepositoryI {
         return DataFailed(error: Exception('Path not found'));
       }
     } catch (e) {
+      talker.error('PhotoRepository Failed to deletePhotoPath: $e');
+
       final exeption = e is Exception ? e : Exception(e.toString());
       return DataFailed(error: exeption);
     }

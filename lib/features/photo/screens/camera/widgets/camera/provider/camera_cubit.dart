@@ -1,14 +1,16 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import 'camera_state.dart';
 
 class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
+  final Talker talker;
+
   static const int countDownSeconds = 3;
   static const int countDownPeriod = 1;
 
@@ -22,7 +24,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
   CameraController? get controller => _controller;
 
-  CameraCubit() : super(const CameraInitial()) {
+  CameraCubit({required this.talker}) : super(const CameraInitial()) {
     WidgetsBinding.instance.addObserver(this);
     _setupCamera(_selectedIndex);
   }
@@ -133,11 +135,12 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
           await newController.setFlashMode(FlashMode.off);
           if (_controller != newController || isClosed) return;
         } catch (e) {
-          log('Flash error: $e');
+          talker.error('Error setting FlashMode: $e');
         }
       }
     } on CameraException catch (e) {
-      log('Camera exception: $e');
+      talker.error('Camera exception: $e');
+
       if (e.code == 'AudioAccessDenied') {
         final audioStatus = await Permission.microphone.status;
         if (isClosed) return;
@@ -156,7 +159,8 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
         const CameraFailure(errorTtype: CameraErrorType.initializationFailed),
       );
     } catch (e) {
-      log('Error initializing camera: $e');
+      talker.error('Error initializing camera: $e');
+
       _safeEmit(
         const CameraFailure(errorTtype: CameraErrorType.initializationFailed),
       );
@@ -205,13 +209,16 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       await controller.setFlashMode(newMode);
 
       if (controller != _controller || isClosed) {
-        log('Flash switch ignored: controller changed or cubit closed');
+        talker.warning(
+          'Flash switch ignored: controller changed or cubit closed',
+        );
         return;
       }
 
       final actualMode = controller.value.flashMode;
       if (actualMode != newMode) {
-        log('Flash not applied: likely no support');
+        talker.warning('Flash not applied: likely no support');
+
         _hasFlashSupport = false;
         _safeEmit(
           const CameraReady(
@@ -222,13 +229,13 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
         );
         return;
       }
-      log('Actual mode after set: $actualMode vs new: $newMode');
 
       _safeEmit(
         CameraReady(isFlashOn: newIsFlashOn, hasFlashSupport: _hasFlashSupport),
       );
     } on CameraException catch (e) {
-      log('Flash error: $e');
+      talker.error('CameraException switching flash: $e');
+
       if (controller != _controller || isClosed) return;
 
       _hasFlashSupport = false;
@@ -240,9 +247,12 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
         ),
       );
     } catch (e) {
-      log('Error switching flash: $e');
+      talker.error('Error switching flash: $e');
+
       if (e.toString().contains('disposed') || e is StateError) {
-        log('Ignored error on disposed controller');
+        talker.warning(
+          'Error switching flash: Ignored error on disposed controller',
+        );
         return;
       }
 
@@ -270,11 +280,16 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     try {
       final picture = await controller.takePicture();
       if (controller != _controller || isClosed) {
-        log('Picture ignored: controller changed or cubit closed');
+        talker.warning('Picture ignored: controller changed or cubit closed');
         return;
       }
       final bytes = await picture.readAsBytes();
-      if (controller != _controller || isClosed) return;
+      if (controller != _controller || isClosed) {
+        talker.warning(
+          'Picture readAsBytes ignored: controller changed or cubit closed',
+        );
+        return;
+      }
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final appDir = await getApplicationDocumentsDirectory();
@@ -291,7 +306,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
       await savePicture(path);
     } catch (e) {
-      log('Failed to capture photo: $e');
+      talker.error('Failed to capture photo: $e');
       return;
     }
   }
