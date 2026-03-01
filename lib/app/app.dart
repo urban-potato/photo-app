@@ -5,7 +5,7 @@ import 'package:talker_flutter/talker_flutter.dart'
     show Talker, TalkerRouteObserver;
 
 import 'app_config.dart';
-import 'theme/index.dart' show TAppTheme;
+import 'theme/theme.dart';
 
 class App extends StatelessWidget {
   const App({super.key, required this.config});

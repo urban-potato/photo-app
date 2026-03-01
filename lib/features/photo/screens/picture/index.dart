@@ -1,1 +1,0 @@
-export './screen/picture.dart';

@@ -1,10 +1,13 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/widgets.dart' show Key;
-import '../../features/photo/screens/camera/index.dart' show CameraScreen;
-import '../../features/photo/screens/gallery/index.dart' show GalleryScreen;
+
+import '../../features/photo/presentation/screens/gallery/index.dart'
+    show GalleryScreen;
 import '../../features/home/index.dart' show HomeScreen;
-import '../../features/photo/screens/picture/index.dart' show PictureScreen;
-import 'wrappers/photo_wrapper.dart';
+import '../../features/photo/presentation/screens/picture/index.dart'
+    show PictureScreen;
+import 'wrappers/camera.dart';
+import 'wrappers/photo.dart';
 
 part 'router.gr.dart';
 

@@ -11,7 +11,7 @@
 part of 'router.dart';
 
 /// generated route for
-/// [CameraScreen]
+/// [CameraScreenWrapper]
 class CameraRoute extends PageRouteInfo<void> {
   const CameraRoute({List<PageRouteInfo>? children})
     : super(CameraRoute.name, initialChildren: children);
@@ -21,7 +21,7 @@ class CameraRoute extends PageRouteInfo<void> {
   static PageInfo page = PageInfo(
     name,
     builder: (data) {
-      return const CameraScreen();
+      return const CameraScreenWrapper();
     },
   );
 }

@@ -6,6 +6,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import 'app/app.dart';
 import 'app/app_config.dart';
+import 'app/factories/di_container.dart' show initializeDependencies;
 import 'app/router/router.dart' show AppRouter;
 
 void main() {
@@ -25,6 +26,8 @@ void main() {
       printClosings: true,
     ),
   );
+
+  initializeDependencies(config: appConfig);
 
   runApp(App(config: appConfig));
 }
