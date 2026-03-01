@@ -139,7 +139,9 @@ class _TakePictureButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: takePicture,
+      onPressed: () async {
+        await takePicture();
+      },
       icon: const Icon(Icons.camera),
       iconSize: 60,
     );
@@ -160,7 +162,9 @@ class _TakeTimedPictureButton extends StatelessWidget {
     final timerColor = isTimerActive ? Colors.yellow : null;
 
     return IconButton(
-      onPressed: takeTimedPicture,
+      onPressed: () async {
+        await takeTimedPicture();
+      },
       icon: Icon(Icons.timer_rounded, color: timerColor),
     );
   }

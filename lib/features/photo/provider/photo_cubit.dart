@@ -100,7 +100,7 @@ class PhotoCubit extends Cubit<PhotoState> {
       case (DataSuccess _):
         {
           _isBusy = false;
-          emit(PhotoLoaded(photoPathsList: dataState.data));
+          emit(PhotoDeleteSuccess(photoPathsList: dataState.data));
           return true;
         }
       case (DataFailed _):

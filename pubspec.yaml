@@ -44,6 +44,7 @@ dependencies:
   photo_view: ^0.15.0
   talker_flutter: ^5.1.14
   talker_bloc_logger: ^5.1.14
+  synchronized: ^3.4.0
 
 dev_dependencies:
   flutter_test:

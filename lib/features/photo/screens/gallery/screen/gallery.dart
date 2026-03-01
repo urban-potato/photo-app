@@ -63,19 +63,25 @@ class GalleryScreen extends StatelessWidget {
                 }
               },
               builder: (context, state) {
-                if (state.photoPathsList != null) {
-                  if (state.photoPathsList!.isEmpty) {
+                final photoPathsList = state.photoPathsList;
+
+                if (photoPathsList != null) {
+                  if (photoPathsList.isEmpty) {
                     return const SliverFillRemaining(
                       child: Center(child: Text('No photos yet')),
                     );
                   }
+
                   return SliverPadding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12.0,
                       vertical: 22.0,
                     ),
-
-                    sliver: _GalleryBody(photoPathsList: state.photoPathsList!),
+                    sliver: _PhotosList(photoPathsList: photoPathsList),
+                  );
+                } else if (state is PhotoInitial || state is PhotoLoading) {
+                  return const SliverFillRemaining(
+                    child: CircularProgressIndicator(),
                   );
                 } else if (state is PhotoFailure) {
                   return const SliverFillRemaining(
@@ -83,7 +89,7 @@ class GalleryScreen extends StatelessWidget {
                   );
                 } else {
                   return const SliverFillRemaining(
-                    child: CircularProgressIndicator(),
+                    child: Center(child: Text('Woops, something went wrong')),
                   );
                 }
               },
@@ -95,8 +101,8 @@ class GalleryScreen extends StatelessWidget {
   }
 }
 
-class _GalleryBody extends StatelessWidget {
-  const _GalleryBody({required this.photoPathsList});
+class _PhotosList extends StatelessWidget {
+  const _PhotosList({required this.photoPathsList});
 
   final List<String> photoPathsList;
 
@@ -133,6 +139,7 @@ class _GalleryBody extends StatelessWidget {
           ),
         );
       },
+
       separatorBuilder: (context, index) {
         return const SizedBox(height: 22);
       },

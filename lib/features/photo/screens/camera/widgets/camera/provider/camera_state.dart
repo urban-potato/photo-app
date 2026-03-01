@@ -1,3 +1,6 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:io' show File;
+
 import 'package:equatable/equatable.dart';
 
 abstract class CameraState extends Equatable {
@@ -19,6 +22,9 @@ class CameraPermissionDenied extends CameraState {
   final PermissionType permissionType;
 
   const CameraPermissionDenied({required this.permissionType});
+
+  @override
+  List<Object?> get props => [permissionType];
 }
 
 class CameraReady extends CameraState {
@@ -40,9 +46,9 @@ class CameraReady extends CameraState {
   List<Object?> get props => [
     isFlashOn,
     hasFlashSupport,
-    warningMessage,
-    secondsLeft,
     isTimerActive,
+    secondsLeft,
+    warningMessage,
   ];
 }
 
@@ -53,6 +59,19 @@ class CameraFailure extends CameraState {
 
   @override
   List<Object?> get props => [errorTtype];
+}
+
+class CameraPictureTaken extends CameraState {
+  final File pictureFile;
+
+  const CameraPictureTaken({required this.pictureFile});
+
+  @override
+  List<Object?> get props => [pictureFile];
+}
+
+class CameraPictureFailure extends CameraState {
+  const CameraPictureFailure();
 }
 
 enum CameraErrorType { noCamerasFound, initializationFailed, generic }

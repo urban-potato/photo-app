@@ -17,6 +17,7 @@ class AppRouter extends RootStackRouter {
       path: '/',
       initial: true,
       children: [
+        RedirectRoute(path: '', redirectTo: 'photo'),
         AutoRoute(
           page: PhotoFeatureRouteWrapper.page,
           path: 'photo',

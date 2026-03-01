@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import 'camera_state.dart';
@@ -11,9 +12,11 @@ import 'camera_state.dart';
 class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   final Talker talker;
 
-  static const int countDownSeconds = 3;
-  static const int countDownPeriod = 1;
+  static const countDownSeconds = 3;
+  static const countDownPeriod = 1;
+  static const photosSubDir = 'photos';
 
+  final Lock _lock = Lock();
   bool _isBusy = false;
   CameraController? _controller;
   List<CameraDescription> _cameras = [];
@@ -30,10 +33,10 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     _setupCamera(_selectedIndex);
   }
 
-  Future<bool> takeTimedPicture(
+  Future<void> takeTimedPicture(
     Future<void> Function(String path) savePicture,
   ) async {
-    if (_isBusy) return false;
+    if (_isBusy) return;
     _isBusy = true;
 
     int secondsLeft = countDownSeconds;
@@ -41,7 +44,8 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     while (secondsLeft > 0) {
       final currentState = state;
       if (currentState is! CameraReady || isClosed) {
-        return false;
+        _isBusy = false;
+        return;
       }
 
       _safeEmit(
@@ -58,7 +62,10 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     }
 
     final currentState = state;
-    if (currentState is! CameraReady || isClosed) return false;
+    if (currentState is! CameraReady || isClosed) {
+      _isBusy = false;
+      return;
+    }
     _safeEmit(
       CameraReady(
         hasFlashSupport: currentState.hasFlashSupport,
@@ -68,8 +75,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     );
 
     _isBusy = false;
-    final isPictureTaken = await takePicture(savePicture);
-    return isPictureTaken;
+    await takePicture(savePicture);
   }
 
   void _safeEmit(CameraState state) {
@@ -121,6 +127,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
       final targetIndex = index % _cameras.length;
       await _controller?.dispose();
+      _controller = null;
       if (isClosed) return;
 
       final newController = CameraController(
@@ -275,70 +282,77 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       }
 
       final currentState = state;
-      if (currentState is! CameraReady) return;
-      _safeEmit(
-        CameraReady(
-          isFlashOn: currentState.isFlashOn,
-          hasFlashSupport: currentState.hasFlashSupport,
-          warningMessage: 'Something went wrong',
-        ),
-      );
+      if (currentState is CameraReady) {
+        _safeEmit(
+          CameraReady(
+            isFlashOn: currentState.isFlashOn,
+            hasFlashSupport: currentState.hasFlashSupport,
+            warningMessage: 'Something went wrong',
+          ),
+        );
+      }
     } finally {
       _isBusy = false;
     }
   }
 
-  Future<bool> takePicture(
-    Future<void> Function(String path) savePicture,
+  Future<void> takePicture(
+    Future<void> Function(String path) savePicturePath,
   ) async {
-    if (_isBusy) return false;
+    if (_isBusy) return;
     _isBusy = true;
 
     try {
-      final controller = _controller;
-      if (controller == null || !controller.value.isInitialized) {
-        return false;
-      }
-      if (controller.value.isTakingPicture) return false;
+      return await _lock.synchronized(() async {
+        final controller = _controller;
+        if (controller == null || !controller.value.isInitialized) {
+          return;
+        }
+        if (controller.value.isTakingPicture) return;
 
-      final picture = await controller.takePicture();
-      if (controller != _controller || isClosed) {
-        talker.warning('Picture ignored: controller changed or cubit closed');
-        return false;
-      }
-      final bytes = await picture.readAsBytes();
-      if (controller != _controller || isClosed) {
-        talker.warning(
-          'Picture readAsBytes ignored: controller changed or cubit closed',
-        );
-        return false;
-      }
+        final picture = await controller.takePicture();
+        if (controller != _controller || isClosed) {
+          talker.warning('Picture ignored: controller changed or cubit closed');
+          return;
+        }
+        final bytes = await picture.readAsBytes();
+        if (controller != _controller || isClosed) {
+          talker.warning(
+            'Picture readAsBytes ignored: controller changed or cubit closed',
+          );
+          return;
+        }
 
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final appDir = await getApplicationDocumentsDirectory();
-      final photosDir = Directory('${appDir.path}/photos');
-      final isDirExists = await photosDir.exists();
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final appDir = await getApplicationDocumentsDirectory();
+        final photosDir = Directory('${appDir.path}/$photosSubDir');
+        final isDirExists = await photosDir.exists();
 
-      if (!isDirExists) {
-        await photosDir.create(recursive: true);
-      }
+        if (!isDirExists) {
+          await photosDir.create(recursive: true);
+        }
 
-      final path = '${photosDir.path}/$timestamp.jpg';
-      final file = File(path);
-      await file.writeAsBytes(bytes);
+        final path = '${photosDir.path}/$timestamp.jpg';
+        final file = File(path);
+        await file.writeAsBytes(bytes);
 
-      await savePicture(path);
+        await savePicturePath(path);
+
+        _isBusy = false;
+        _safeEmit(CameraPictureTaken(pictureFile: file));
+      });
     } catch (e) {
       if (e is CameraException && e.description?.contains('disposed') == true) {
         talker.warning('CameraException: Controller disposed');
       } else {
         talker.error('Failed to capture photo: $e');
       }
-      return false;
-    } finally {
+
+      _safeEmit(const CameraPictureFailure());
+
       _isBusy = false;
+      _setupCamera(_selectedIndex);
     }
-    return true;
   }
 
   Future<void> retryInitialization() async {
@@ -366,16 +380,13 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       _permissionDialogCausedPause = true;
     }
 
-    final controller = _controller;
-    _controller = null;
+    await _lock.synchronized(() async {
+      final controller = _controller;
+      _controller = null;
+      if (controller == null) return;
 
-    if (controller == null) return;
-
-    while (controller.value.isTakingPicture) {
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
-
-    await controller.dispose();
+      await controller.dispose();
+    });
   }
 
   Future<void> _handleResume() async {
@@ -385,6 +396,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     }
 
     await _setupCamera(_selectedIndex);
+    _isBusy = false;
   }
 
   @override
@@ -392,11 +404,14 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
 
     final controller = _controller;
-    await controller?.dispose();
 
-    if (_controller == controller) {
-      _controller = null;
-    }
-    await super.close();
+    return await _lock.synchronized(() async {
+      await controller?.dispose();
+
+      if (_controller == controller) {
+        _controller = null;
+      }
+      await super.close();
+    });
   }
 }

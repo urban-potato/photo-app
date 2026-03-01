@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:photo_view/photo_view.dart';
 
-import '../../../provider/index.dart' show PhotoCubit;
+import '../../../provider/index.dart'
+    show PhotoCubit, PhotoDeleteSuccess, PhotoState;
 
 @RoutePage()
 class PictureScreen extends StatelessWidget {
@@ -16,8 +17,6 @@ class PictureScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final photoCubit = context.read<PhotoCubit>();
-    final router = context.router;
-    // final messenger = ScaffoldMessenger.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -25,24 +24,25 @@ class PictureScreen extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () async {
-              final isSuccess = await photoCubit.deletePhotoPath(picturePath);
-              if (isSuccess) {
-                router.pop();
-              } else {
-                // messenger.showSnackBar(
-                //   const SnackBar(content: Text('Error deleting picture')),
-                // );
-              }
+              await photoCubit.deletePhotoPath(picturePath);
             },
             icon: const Icon(Icons.delete_rounded),
           ),
         ],
       ),
       body: SafeArea(
-        child: Center(
-          child: PhotoView(
-            imageProvider: FileImage(File(picturePath)),
-            heroAttributes: PhotoViewHeroAttributes(tag: picturePath),
+        child: BlocListener<PhotoCubit, PhotoState>(
+          listener: (context, state) {
+            if (state is PhotoDeleteSuccess && context.mounted) {
+              final router = context.router;
+              router.popUntil((route) => route.isFirst);
+            }
+          },
+          child: Center(
+            child: PhotoView(
+              imageProvider: FileImage(File(picturePath)),
+              heroAttributes: PhotoViewHeroAttributes(tag: picturePath),
+            ),
           ),
         ),
       ),

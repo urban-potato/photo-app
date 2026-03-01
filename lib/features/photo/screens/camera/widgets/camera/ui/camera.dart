@@ -20,18 +20,30 @@ class CameraWidget extends StatelessWidget {
 
       child: BlocConsumer<CameraCubit, CameraState>(
         listener: (context, state) {
-          if (state is! CameraReady) return;
-          final warningMessage = state.warningMessage;
-          if (warningMessage == null) return;
+          if (state is CameraReady) {
+            final warningMessage = state.warningMessage;
+            if (warningMessage == null) return;
 
-          final messenger = ScaffoldMessenger.of(context);
-          messenger.showSnackBar(SnackBar(content: Text(warningMessage)));
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.showSnackBar(SnackBar(content: Text(warningMessage)));
+          }
+
+          if (state is CameraPictureTaken && context.mounted) {
+            final router = context.router;
+            router.popUntil((route) => route.isFirst);
+          }
+
+          if (state is CameraPictureFailure && context.mounted) {
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.showSnackBar(
+              const SnackBar(content: Text('Failed to capture photo')),
+            );
+          }
         },
 
         builder: (context, state) {
           final cameraCubit = context.read<CameraCubit>();
           final photoCubit = context.read<PhotoCubit>();
-          final router = context.router;
 
           if (state is CameraPermissionDenied) {
             return ErrorStateView.fromPermissionDenied(
@@ -57,7 +69,6 @@ class CameraWidget extends StatelessWidget {
             final isTimerActive = state.isTimerActive;
             final secondsLeft = state.secondsLeft;
             final controller = cameraCubit.controller;
-            // final messenger = ScaffoldMessenger.of(context);
 
             if (controller == null) {
               return ErrorStateView.noController(
@@ -70,27 +81,11 @@ class CameraWidget extends StatelessWidget {
             }
 
             Future<void> takeTimedPicture() async {
-              final isPictureTaken = await cameraCubit.takeTimedPicture(
-                savePicture,
-              );
-              if (isPictureTaken) {
-                router.pop();
-              } else {
-                // messenger.showSnackBar(
-                //   const SnackBar(content: Text('Error taking picture')),
-                // );
-              }
+              await cameraCubit.takeTimedPicture(savePicture);
             }
 
             Future<void> takePicture() async {
-              final isPictureTaken = await cameraCubit.takePicture(savePicture);
-              if (isPictureTaken) {
-                router.pop();
-              } else {
-                // messenger.showSnackBar(
-                //   const SnackBar(content: Text('Error taking picture')),
-                // );
-              }
+              await cameraCubit.takePicture(savePicture);
             }
 
             final CountDownProps countDownProps = (secondsLeft: secondsLeft);
@@ -109,6 +104,12 @@ class CameraWidget extends StatelessWidget {
               cameraControlsProps: cameraControlsProps,
               countDownProps: countDownProps,
             );
+          }
+
+          if (state is CameraPictureTaken) {
+            final picture = state.pictureFile;
+
+            return Center(child: Image.file(picture));
           }
 
           return const Center(child: Text('Woops, something went wrong'));
