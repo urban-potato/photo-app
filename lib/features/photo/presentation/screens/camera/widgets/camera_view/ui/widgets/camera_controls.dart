@@ -1,38 +1,8 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../../shared/presentation/providers/responsive_size/index.dart';
-
-class CameraView extends StatelessWidget {
-  const CameraView({
-    super.key,
-    required this.controller,
-    required this.cameraControlsProps,
-    required this.countDownProps,
-  });
-
-  final CameraController controller;
-  final CameraControlsProps cameraControlsProps;
-  final CountDownProps countDownProps;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        SizedBox.expand(child: CameraPreview(controller)),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: _CameraControls(cameraControlsProps),
-        ),
-
-        _CountdownDisplay(countDownProps),
-      ],
-    );
-  }
-}
+import '../../../../../../../../../shared/presentation/providers/responsive_size/index.dart'
+    show ResponsiveSizeCubit;
 
 typedef CameraControlsProps = ({
   bool hasFlashSupport,
@@ -44,8 +14,8 @@ typedef CameraControlsProps = ({
   Future<void> Function() takePicture,
 });
 
-class _CameraControls extends StatelessWidget {
-  const _CameraControls(this.cameraControlsProps);
+class CameraControls extends StatelessWidget {
+  const CameraControls(this.cameraControlsProps, {super.key});
 
   final CameraControlsProps cameraControlsProps;
 
@@ -198,34 +168,5 @@ class _SwitchCameraButton extends StatelessWidget {
       onPressed: switchCamera,
       icon: Icon(Icons.cameraswitch_rounded, size: iconSize),
     );
-  }
-}
-
-typedef CountDownProps = ({int? secondsLeft});
-
-class _CountdownDisplay extends StatelessWidget {
-  const _CountdownDisplay(this.countDownProps);
-
-  final CountDownProps countDownProps;
-
-  @override
-  Widget build(BuildContext context) {
-    final secondsLeft = countDownProps.secondsLeft ?? 0;
-    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
-    final fontSize = responsiveSizeCubit.textHuge;
-
-    return (secondsLeft > 0)
-        ? Center(
-            child: Text(
-              '$secondsLeft',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.4),
-                fontWeight: FontWeight.bold,
-                fontSize: fontSize,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          )
-        : const SizedBox.shrink();
   }
 }
