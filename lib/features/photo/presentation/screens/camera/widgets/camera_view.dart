@@ -1,5 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../../../shared/presentation/providers/responsive_size/index.dart';
 
 class CameraView extends StatelessWidget {
   const CameraView({
@@ -122,10 +125,12 @@ class _SwitchFlashButton extends StatelessWidget {
     final flashIcon = isFlashOn
         ? Icons.flash_on_rounded
         : Icons.flash_off_rounded;
+    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
+    final iconSize = responsiveSizeCubit.iconM;
 
     return IconButton(
       onPressed: onPressed,
-      icon: Icon(flashIcon),
+      icon: Icon(flashIcon, size: iconSize),
       color: flashColor,
     );
   }
@@ -138,12 +143,19 @@ class _TakePictureButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: () async {
-        await takePicture();
-      },
-      icon: const Icon(Icons.camera),
-      iconSize: 60,
+    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
+    final paddingV = responsiveSizeCubit.paddingXXXS;
+    final iconSize = responsiveSizeCubit.iconXXXL;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: paddingV),
+      child: IconButton(
+        onPressed: () async {
+          await takePicture();
+        },
+        icon: const Icon(Icons.camera),
+        iconSize: iconSize,
+      ),
     );
   }
 }
@@ -160,12 +172,14 @@ class _TakeTimedPictureButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timerColor = isTimerActive ? Colors.yellow : null;
+    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
+    final iconSize = responsiveSizeCubit.iconM;
 
     return IconButton(
       onPressed: () async {
         await takeTimedPicture();
       },
-      icon: Icon(Icons.timer_rounded, color: timerColor),
+      icon: Icon(Icons.timer_rounded, size: iconSize, color: timerColor),
     );
   }
 }
@@ -177,9 +191,12 @@ class _SwitchCameraButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
+    final iconSize = responsiveSizeCubit.iconM;
+
     return IconButton(
       onPressed: switchCamera,
-      icon: const Icon(Icons.cameraswitch_rounded),
+      icon: Icon(Icons.cameraswitch_rounded, size: iconSize),
     );
   }
 }
@@ -194,6 +211,8 @@ class _CountdownDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final secondsLeft = countDownProps.secondsLeft ?? 0;
+    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
+    final fontSize = responsiveSizeCubit.textHuge;
 
     return (secondsLeft > 0)
         ? Center(
@@ -202,8 +221,9 @@ class _CountdownDisplay extends StatelessWidget {
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.4),
                 fontWeight: FontWeight.bold,
-                fontSize: 90,
+                fontSize: fontSize,
               ),
+              textAlign: TextAlign.center,
             ),
           )
         : const SizedBox.shrink();

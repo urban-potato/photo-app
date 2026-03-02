@@ -30,6 +30,7 @@ class PictureScreen extends StatelessWidget {
           ),
         ],
       ),
+
       body: SafeArea(
         child: BlocListener<PhotoCubit, PhotoState>(
           listener: (context, state) {

@@ -9,6 +9,8 @@ import '../../features/photo/presentation/provider/index.dart' show PhotoCubit;
 import '../../features/photo/presentation/screens/camera/provider/index.dart'
     show CameraCubit;
 import '../app_config.dart';
+import '../../shared/presentation/providers/responsive_size/index.dart'
+    show ResponsiveSizeCubit;
 
 final di = GetIt.instance;
 
@@ -35,4 +37,6 @@ void initializeDependencies({required AppConfig config}) {
       talker: config.talker,
     ),
   );
+
+  di.registerSingleton<ResponsiveSizeCubit>(ResponsiveSizeCubit());
 }

@@ -1,13 +1,15 @@
-import 'dart:io';
-
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../../app/router/router.dart'
-    show PictureRoute, CameraRoute;
+import '../../../../../../shared/presentation/providers/responsive_size/index.dart'
+    show ResponsiveSizeCubit;
 import '../../../provider/index.dart';
+import '../utils/photo_failure_message_helper.dart';
+import '../widgets/app_bar.dart';
+import '../widgets/camera_button.dart';
+import '../../../../../../shared/presentation/ui/index.dart' show MessageView;
+import '../widgets/photos_list.dart';
 
 @RoutePage()
 class GalleryScreen extends StatelessWidget {
@@ -15,16 +17,9 @@ class GalleryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final router = context.router;
-
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () {
-          router.push(const CameraRoute());
-        },
-        child: const Icon(Icons.camera_alt_rounded),
-      ),
+      floatingActionButton: const CameraButton(),
+
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(
@@ -32,16 +27,7 @@ class GalleryScreen extends StatelessWidget {
           ),
 
           slivers: [
-            const SliverAppBar(
-              systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: Brightness.light,
-                systemNavigationBarColor: Colors.white,
-                systemNavigationBarIconBrightness: Brightness.dark,
-              ),
-              pinned: true,
-              title: Text('My photos'),
-            ),
+            const AppBarWidget(),
 
             BlocConsumer<PhotoCubit, PhotoState>(
               listener: (context, state) {
@@ -49,51 +35,21 @@ class GalleryScreen extends StatelessWidget {
                   final stateError = state.error;
                   if (stateError == null) return;
 
-                  final message = switch (stateError.type) {
-                    PhotoErrorType.load =>
-                      'Error loading photos. Please try again',
-                    PhotoErrorType.save =>
-                      'Error saving photo. Please try again',
-                    PhotoErrorType.delete =>
-                      'Error deleting photo. Please try again',
-                  };
+                  final message = getPhotoFailureErrorMessage(stateError.type);
+                  final messanger = ScaffoldMessenger.of(context);
 
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(message)));
+                  messanger.showSnackBar(SnackBar(content: Text(message)));
                 }
               },
 
               builder: (context, state) {
-                final photoPathsList = state.photoPathsList;
+                final responsiveSizeCubit = context
+                    .watch<ResponsiveSizeCubit>();
 
-                if (photoPathsList != null) {
-                  if (photoPathsList.isEmpty) {
-                    return const SliverFillRemaining(
-                      child: Center(child: Text('No photos yet')),
-                    );
-                  }
-
-                  return SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12.0,
-                      vertical: 22.0,
-                    ),
-                    sliver: _PhotosList(photoPathsList: photoPathsList),
-                  );
-                } else if (state is PhotoInitial || state is PhotoLoading) {
-                  return const SliverFillRemaining(
-                    child: CircularProgressIndicator(),
-                  );
-                } else if (state is PhotoFailure) {
-                  return const SliverFillRemaining(
-                    child: Center(child: Text('Error loading photos')),
-                  );
-                } else {
-                  return const SliverFillRemaining(
-                    child: Center(child: Text('Woops, something went wrong')),
-                  );
-                }
+                return _buildContentSliver(
+                  state: state,
+                  responsiveSizeCubit: responsiveSizeCubit,
+                );
               },
             ),
           ],
@@ -101,50 +57,42 @@ class GalleryScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-class _PhotosList extends StatelessWidget {
-  const _PhotosList({required this.photoPathsList});
+  Widget _buildContentSliver({
+    required PhotoState state,
+    required ResponsiveSizeCubit responsiveSizeCubit,
+  }) {
+    final photoPathsList = state.photoPathsList;
+    bool needsSliverWrapper = true;
 
-  final List<String> photoPathsList;
+    Widget content = const MessageView(message: 'Woops, something went wrong');
 
-  @override
-  Widget build(BuildContext context) {
-    return SliverList.separated(
-      itemCount: photoPathsList.length,
-      itemBuilder: (context, index) {
-        final router = context.router;
-        final imagePath = File(photoPathsList[index]);
+    if (photoPathsList != null) {
+      if (photoPathsList.isEmpty) {
+        content = const MessageView(message: 'No photos yet');
+      } else {
+        content = PhotosList(photoPathsList: photoPathsList);
+        needsSliverWrapper = false;
+      }
+    } else if (state is PhotoInitial || state is PhotoLoading) {
+      content = const CircularProgressIndicator();
+    } else if (state is PhotoFailure) {
+      content = const MessageView(message: 'Error loading photos');
+    }
 
-        return DecoratedBox(
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.25,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12.0),
-              child: Hero(
-                tag: imagePath.path,
-                child: Material(
-                  color: Colors.transparent,
-                  child: Ink.image(
-                    image: FileImage(imagePath),
-                    fit: BoxFit.cover,
-                    child: InkWell(
-                      onTap: () {
-                        router.push(PictureRoute(picturePath: imagePath.path));
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+    final internalSliver = needsSliverWrapper
+        ? SliverFillRemaining(child: content)
+        : content;
 
-      separatorBuilder: (context, index) {
-        return const SizedBox(height: 22);
-      },
+    final screenVPadding = responsiveSizeCubit.screenVPadding;
+    final screenHPadding = responsiveSizeCubit.screenHPadding;
+
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(
+        horizontal: screenHPadding,
+        vertical: screenVPadding,
+      ),
+      sliver: internalSliver,
     );
   }
 }

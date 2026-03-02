@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/presentation/providers/responsive_size/index.dart'
+    show ResponsiveSizeCubit;
+import 'text_theme.dart';
+
 class TAppTheme {
   TAppTheme._();
 
-  static ThemeData lightTheme() {
+  static ThemeData lightTheme(ResponsiveSizeCubit responsiveSizeCubit) {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
@@ -26,6 +30,7 @@ class TAppTheme {
         ),
       ),
       iconTheme: const IconThemeData(color: Colors.white),
+      textTheme: TTextTheme.lightTextTheme(responsiveSizeCubit),
     );
   }
 }
