@@ -2,12 +2,13 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../shared/presentation/ui/index.dart'
+    show MessageWithButtonView;
 import '../../../provider/index.dart' show PhotoCubit;
 import '../provider/index.dart';
 import '../utils/camera_failure_message_helper.dart';
 import '../utils/permission_denied_message_helper.dart';
 import '../widgets/camera_view.dart';
-import '../../../../../../shared/presentation/ui/message_with_button_view/message_with_button_view.dart';
 
 class CameraScreen extends StatelessWidget {
   const CameraScreen({super.key});
