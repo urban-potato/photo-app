@@ -1,8 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
-import 'widgets/camera_controls.dart';
-import 'widgets/countdown_display.dart';
+import 'widgets/camera_controls/index.dart';
+import 'widgets/countdown_display/countdown_display.dart';
 
 class CameraView extends StatelessWidget {
   const CameraView({
@@ -21,13 +21,7 @@ class CameraView extends StatelessWidget {
     return Stack(
       children: [
         SizedBox.expand(child: CameraPreview(controller)),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: CameraControls(cameraControlsProps),
-        ),
-
+        CameraControls(cameraControlsProps),
         CountdownDisplay(countDownProps),
       ],
     );
