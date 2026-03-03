@@ -9,7 +9,7 @@ import '../utils/photo_failure_message_helper.dart';
 import '../widgets/app_bar.dart';
 import '../widgets/camera_button.dart';
 import '../../../../../../shared/presentation/ui/index.dart' show MessageView;
-import '../widgets/photos_list.dart';
+import '../widgets/photos_list/ui/photos_list.dart';
 
 @RoutePage()
 class GalleryScreen extends StatelessWidget {
@@ -72,10 +72,11 @@ class GalleryScreen extends StatelessWidget {
         content = const MessageView(message: 'No photos yet');
       } else {
         content = PhotosList(photoPathsList: photoPathsList);
+
         needsSliverWrapper = false;
       }
     } else if (state is PhotoInitial || state is PhotoLoading) {
-      content = const CircularProgressIndicator();
+      content = const Center(child: CircularProgressIndicator());
     } else if (state is PhotoFailure) {
       content = const MessageView(message: 'Error loading photos');
     }

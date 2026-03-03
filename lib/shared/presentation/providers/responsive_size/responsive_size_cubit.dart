@@ -58,7 +58,8 @@ class ResponsiveSizeCubit extends Cubit<ResponsiveSizeState>
     }
   }
 
-  bool get isTablet => state.screenWidth >= _tabletBreakpoint;
+  bool get isTablet =>
+      (state.screenWidth >= _tabletBreakpoint) && state.isVertical;
 
   //
   // Scale factors
