@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../../../app/router/router.dart' show PictureRoute;
 import '../../../../../../../../shared/presentation/providers/responsive_size/index.dart'
     show ResponsiveSizeCubit;
-import '../utils/grid_config_helper.dart';
+import 'utils/grid_config_helper.dart';
 
 class PhotosList extends StatelessWidget {
   const PhotosList({super.key, required this.photoPathsList});

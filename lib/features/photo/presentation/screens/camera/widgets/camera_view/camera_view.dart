@@ -1,8 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
-import 'widgets/camera_controls/index.dart';
-import 'widgets/countdown_display/countdown_display.dart';
+import '../camera_controls/camera_controls.dart';
+import '../countdown_display/countdown_display.dart';
 
 class CameraView extends StatelessWidget {
   const CameraView({

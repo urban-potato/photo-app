@@ -6,10 +6,9 @@ import '../../../../../../shared/presentation/providers/responsive_size/index.da
     show ResponsiveSizeCubit;
 import '../../../provider/index.dart';
 import '../utils/photo_error_messages.dart';
-import '../widgets/app_bar.dart';
-import '../widgets/camera_button.dart';
-import '../../../../../../shared/presentation/ui/index.dart' show MessageView;
-import '../widgets/photos_list/ui/photos_list.dart';
+import '../../../../../../shared/presentation/widgets/index.dart'
+    show MessageView;
+import '../widgets/index.dart';
 
 @RoutePage()
 class GalleryScreen extends StatelessWidget {
