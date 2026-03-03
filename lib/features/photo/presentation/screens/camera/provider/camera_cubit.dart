@@ -34,9 +34,10 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   bool _permissionDialogCausedPause = false;
 
   CameraController? get controller => _controller;
+  bool get _isDisposed => !(_controller?.value.isInitialized ?? false);
 
   Future<void> takeTimedPicture() async {
-    if (_isBusy) return;
+    if (_isBusy || _isDisposed) return;
     _isBusy = true;
 
     int secondsLeft = countDownSeconds;
@@ -62,7 +63,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     }
 
     final currentState = state;
-    if (currentState is! CameraReady || isClosed) {
+    if (currentState is! CameraReady || isClosed || _isDisposed) {
       _isBusy = false;
       return;
     }
@@ -137,7 +138,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       _controller = newController;
 
       await newController.initialize();
-      if (_controller != newController || isClosed) return;
+      if (_controller != newController || isClosed || _isDisposed) return;
 
       _selectedIndex = targetIndex;
       _hasFlashSupport =
@@ -146,7 +147,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       if (_hasFlashSupport) {
         try {
           await newController.setFlashMode(FlashMode.off);
-          if (_controller != newController || isClosed) return;
+          if (_controller != newController || isClosed || _isDisposed) return;
         } catch (e) {
           talker.error('Error setting FlashMode: $e');
         }
@@ -184,7 +185,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   }
 
   Future<void> switchCamera() async {
-    if (_isBusy) return;
+    if (_isBusy || _isDisposed) return;
     _isBusy = true;
 
     try {
@@ -199,12 +200,14 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   }
 
   Future<void> switchFlash() async {
-    if (_isBusy) return;
+    if (_isBusy || _isDisposed) return;
     _isBusy = true;
 
     try {
       final controller = _controller;
-      if (controller == null || !controller.value.isInitialized) {
+      if (controller == null ||
+          !controller.value.isInitialized ||
+          _isDisposed) {
         return;
       }
 
@@ -221,7 +224,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
         return;
       }
 
-      if (!controller.value.isInitialized) {
+      if (!controller.value.isInitialized || _isDisposed) {
         return;
       }
 
@@ -233,7 +236,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
       await controller.setFlashMode(newMode);
 
-      if (controller != _controller || isClosed) {
+      if (controller != _controller || isClosed || _isDisposed) {
         talker.warning(
           'Flash switch ignored: controller changed or cubit closed',
         );
@@ -261,7 +264,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     } on CameraException catch (e) {
       talker.error('CameraException switching flash: $e');
 
-      if (controller != _controller || isClosed) return;
+      if (controller != _controller || isClosed || _isDisposed) return;
 
       _hasFlashSupport = false;
       _safeEmit(
@@ -297,27 +300,32 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   }
 
   Future<void> takePicture() async {
-    if (_isBusy) return;
+    if (_isBusy || _isDisposed) return;
     _isBusy = true;
 
     try {
       return await _lock.synchronized(() async {
         final controller = _controller;
-        if (controller == null || !controller.value.isInitialized) {
+        if (controller == null ||
+            !controller.value.isInitialized ||
+            controller.value.isTakingPicture ||
+            _isDisposed) {
+          _isBusy = false;
           return;
         }
-        if (controller.value.isTakingPicture) return;
 
         final picture = await controller.takePicture();
-        if (controller != _controller || isClosed) {
+        if (controller != _controller || isClosed || _isDisposed) {
           talker.warning('Picture ignored: controller changed or cubit closed');
+          _isBusy = false;
           return;
         }
         final bytes = await picture.readAsBytes();
-        if (controller != _controller || isClosed) {
+        if (controller != _controller || isClosed || _isDisposed) {
           talker.warning(
             'Picture readAsBytes ignored: controller changed or cubit closed',
           );
+          _isBusy = false;
           return;
         }
 
@@ -376,9 +384,13 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       _permissionDialogCausedPause = true;
     }
 
+    _safeEmit(const CameraPaused());
+
     await _lock.synchronized(() async {
       final controller = _controller;
-      _controller = null;
+      if (_controller == controller) {
+        _controller = null;
+      }
       if (controller == null) return;
 
       await controller.dispose();
@@ -402,6 +414,8 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     final controller = _controller;
 
     return await _lock.synchronized(() async {
+      _safeEmit(const CameraPaused());
+
       await controller?.dispose();
 
       if (_controller == controller) {

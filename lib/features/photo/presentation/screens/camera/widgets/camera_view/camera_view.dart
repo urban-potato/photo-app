@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../camera_controls/camera_controls.dart';
 import '../countdown_display/countdown_display.dart';
+import 'utils/index.dart';
 
 class CameraView extends StatelessWidget {
   const CameraView({
@@ -18,12 +19,50 @@ class CameraView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        SizedBox.expand(child: CameraPreview(controller)),
-        CameraControls(cameraControlsProps),
-        CountdownDisplay(countDownProps),
-      ],
+    if (!controller.value.isInitialized) {
+      return const SizedBox.shrink();
+    }
+
+    final orientation = MediaQuery.of(context).orientation;
+    final aspectRatio = controller.value.aspectRatio;
+    final adjustedAspectRatio = adjustAspectRatio(
+      orientation: orientation,
+      aspectRatio: aspectRatio,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final previewSize = calculatePreviewSize(
+          maxWidth: constraints.maxWidth,
+          maxHeight: constraints.maxHeight,
+          aspectRatio: adjustedAspectRatio,
+        );
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            const DecoratedBox(decoration: BoxDecoration(color: Colors.black)),
+
+            Center(
+              child: SizedBox(
+                height: previewSize.height,
+                width: previewSize.width,
+                child: CameraPreview(controller),
+              ),
+            ),
+
+            Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [const Spacer(), CameraControls(cameraControlsProps)],
+            ),
+
+            Align(
+              alignment: Alignment.center,
+              child: CountdownDisplay(countDownProps),
+            ),
+          ],
+        );
+      },
     );
   }
 }

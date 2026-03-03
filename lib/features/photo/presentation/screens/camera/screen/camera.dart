@@ -18,6 +18,7 @@ class CameraScreen extends StatelessWidget {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('New photo'),
         elevation: 0,
@@ -82,6 +83,10 @@ class CameraScreen extends StatelessWidget {
         message: message,
         onPressed: cameraCubit.retryInitialization,
       );
+    }
+
+    if (state is CameraPaused) {
+      return const CameraPausedView();
     }
 
     if (state is CameraLoading || state is CameraInitial) {

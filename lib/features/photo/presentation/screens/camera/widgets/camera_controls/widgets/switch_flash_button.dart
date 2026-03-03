@@ -19,7 +19,7 @@ class SwitchFlashButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onPressed = hasFlashSupport ? switchFlash : null;
-    final flashColor = hasFlashSupport ? null : Colors.grey;
+    final disabledColor = Colors.grey[400];
     final flashIcon = isFlashOn
         ? Icons.flash_on_rounded
         : Icons.flash_off_rounded;
@@ -29,7 +29,7 @@ class SwitchFlashButton extends StatelessWidget {
     return IconButton(
       onPressed: onPressed,
       icon: Icon(flashIcon, size: iconSize),
-      color: flashColor,
+      disabledColor: disabledColor,
     );
   }
 }

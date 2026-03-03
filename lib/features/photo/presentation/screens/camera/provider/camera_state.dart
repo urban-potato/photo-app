@@ -1,4 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:io' show File;
 
 import 'package:equatable/equatable.dart';
@@ -72,6 +71,10 @@ class CameraPictureTaken extends CameraState {
 
 class CameraPictureFailure extends CameraState {
   const CameraPictureFailure();
+}
+
+class CameraPaused extends CameraState {
+  const CameraPaused();
 }
 
 enum CameraErrorType { noCamerasFound, initializationFailed, generic }

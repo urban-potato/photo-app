@@ -1,0 +1,22 @@
+import 'package:flutter/material.dart' show Size;
+
+Size calculatePreviewSize({
+  required double maxWidth,
+  required double maxHeight,
+  required double aspectRatio,
+}) {
+  double width = maxWidth;
+  double height = width / aspectRatio;
+
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = height * aspectRatio;
+  }
+
+  if (width > maxWidth) {
+    width = maxWidth;
+    height = width / aspectRatio;
+  }
+
+  return Size(width, height);
+}

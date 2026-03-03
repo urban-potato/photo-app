@@ -29,53 +29,44 @@ class CameraControls extends StatelessWidget {
       :takePicture,
     ) = cameraControlsProps;
 
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-
-      child: DecoratedBox(
-        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.3)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Flexible(
-              flex: 1,
-              fit: FlexFit.tight,
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SwitchCameraButton(switchCamera: switchCamera),
-                    TakeTimedPictureButton(
-                      takeTimedPicture: takeTimedPicture,
-                      isTimerActive: isTimerActive,
-                    ),
-                  ],
-                ),
+    return DecoratedBox(
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.3)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Flexible(
+            flex: 1,
+            fit: FlexFit.tight,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SwitchCameraButton(switchCamera: switchCamera),
+                  TakeTimedPictureButton(
+                    takeTimedPicture: takeTimedPicture,
+                    isTimerActive: isTimerActive,
+                  ),
+                ],
               ),
             ),
+          ),
 
-            Flexible(
-              flex: 1,
-              child: TakePictureButton(takePicture: takePicture),
-            ),
+          Flexible(flex: 1, child: TakePictureButton(takePicture: takePicture)),
 
-            Flexible(
-              flex: 1,
-              fit: FlexFit.tight,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: SwitchFlashButton(
-                  switchFlash: switchFlash,
-                  hasFlashSupport: hasFlashSupport,
-                  isFlashOn: isFlashOn,
-                ),
+          Flexible(
+            flex: 1,
+            fit: FlexFit.tight,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SwitchFlashButton(
+                switchFlash: switchFlash,
+                hasFlashSupport: hasFlashSupport,
+                isFlashOn: isFlashOn,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
