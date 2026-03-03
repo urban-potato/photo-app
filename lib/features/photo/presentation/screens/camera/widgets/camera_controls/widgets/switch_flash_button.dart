@@ -23,8 +23,8 @@ class SwitchFlashButton extends StatelessWidget {
     final flashIcon = isFlashOn
         ? Icons.flash_on_rounded
         : Icons.flash_off_rounded;
-    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
-    final iconSize = responsiveSizeCubit.iconM;
+    final responsive = context.watch<ResponsiveSizeCubit>();
+    final iconSize = responsive.iconM;
 
     return IconButton(
       onPressed: onPressed,

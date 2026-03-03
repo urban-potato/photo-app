@@ -18,10 +18,10 @@ class MessageWithButtonView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
-    final screenVPadding = responsiveSizeCubit.screenVPadding;
-    final screenHPadding = responsiveSizeCubit.screenHPadding;
-    final spacing = responsiveSizeCubit.spacingM;
+    final responsive = context.watch<ResponsiveSizeCubit>();
+    final screenVPadding = responsive.screenVPadding;
+    final screenHPadding = responsive.screenHPadding;
+    final spacing = responsive.spacingM;
 
     return Center(
       child: Padding(

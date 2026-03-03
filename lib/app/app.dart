@@ -21,7 +21,7 @@ class App extends StatelessWidget {
       config: config,
       child: BlocBuilder<ResponsiveSizeCubit, ResponsiveSizeState>(
         builder: (context, state) {
-          final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
+          final responsive = context.watch<ResponsiveSizeCubit>();
 
           return MaterialApp.router(
             routerConfig: config.router.config(
@@ -29,7 +29,7 @@ class App extends StatelessWidget {
             ),
             debugShowCheckedModeBanner: false,
             title: 'Photo App',
-            theme: TAppTheme.lightTheme(responsiveSizeCubit),
+            theme: TAppTheme.lightTheme(responsive),
           );
         },
       ),

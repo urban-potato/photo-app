@@ -11,9 +11,9 @@ class TakePictureButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
-    final paddingV = responsiveSizeCubit.paddingXXXS;
-    final iconSize = responsiveSizeCubit.iconXXXL;
+    final responsive = context.watch<ResponsiveSizeCubit>();
+    final paddingV = responsive.paddingXXXS;
+    final iconSize = responsive.iconXXXL;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: paddingV),

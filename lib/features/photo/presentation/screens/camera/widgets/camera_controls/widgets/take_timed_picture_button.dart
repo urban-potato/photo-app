@@ -17,8 +17,8 @@ class TakeTimedPictureButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timerColor = isTimerActive ? Colors.yellow : null;
-    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
-    final iconSize = responsiveSizeCubit.iconM;
+    final responsive = context.watch<ResponsiveSizeCubit>();
+    final iconSize = responsive.iconM;
 
     return IconButton(
       onPressed: () async {

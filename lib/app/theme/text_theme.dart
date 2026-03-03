@@ -6,10 +6,10 @@ import '../../shared/presentation/providers/responsive_size/index.dart'
 class TTextTheme {
   TTextTheme._();
 
-  static TextTheme lightTextTheme(ResponsiveSizeCubit responsiveSizeCubit) {
-    final bodyLargeFontSize = responsiveSizeCubit.textL;
-    final bodyMediumFontSize = responsiveSizeCubit.textM;
-    final bodySmallFontSize = responsiveSizeCubit.textS;
+  static TextTheme lightTextTheme(ResponsiveSizeCubit responsive) {
+    final bodyLargeFontSize = responsive.textL;
+    final bodyMediumFontSize = responsive.textM;
+    final bodySmallFontSize = responsive.textS;
 
     return TextTheme(
       bodySmall: const TextStyle().copyWith(

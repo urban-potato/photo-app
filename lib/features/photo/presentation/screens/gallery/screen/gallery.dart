@@ -42,12 +42,11 @@ class GalleryScreen extends StatelessWidget {
               },
 
               builder: (context, state) {
-                final responsiveSizeCubit = context
-                    .watch<ResponsiveSizeCubit>();
+                final responsive = context.watch<ResponsiveSizeCubit>();
 
                 return _buildContentSliver(
                   state: state,
-                  responsiveSizeCubit: responsiveSizeCubit,
+                  responsive: responsive,
                 );
               },
             ),
@@ -59,7 +58,7 @@ class GalleryScreen extends StatelessWidget {
 
   Widget _buildContentSliver({
     required PhotoState state,
-    required ResponsiveSizeCubit responsiveSizeCubit,
+    required ResponsiveSizeCubit responsive,
   }) {
     final photoPathsList = state.photoPathsList;
     bool needsSliverWrapper = true;
@@ -84,8 +83,8 @@ class GalleryScreen extends StatelessWidget {
         ? SliverFillRemaining(child: content)
         : content;
 
-    final screenVPadding = responsiveSizeCubit.screenVPadding;
-    final screenHPadding = responsiveSizeCubit.screenHPadding;
+    final screenVPadding = responsive.screenVPadding;
+    final screenHPadding = responsive.screenHPadding;
 
     return SliverPadding(
       padding: EdgeInsets.symmetric(

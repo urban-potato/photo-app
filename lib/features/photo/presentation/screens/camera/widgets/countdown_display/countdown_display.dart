@@ -14,8 +14,8 @@ class CountdownDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final secondsLeft = countDownProps.secondsLeft ?? 0;
-    final responsiveSizeCubit = context.watch<ResponsiveSizeCubit>();
-    final fontSize = responsiveSizeCubit.textHuge;
+    final responsive = context.watch<ResponsiveSizeCubit>();
+    final fontSize = responsive.textHuge;
 
     return (secondsLeft > 0)
         ? Center(

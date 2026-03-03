@@ -7,7 +7,7 @@ import 'text_theme.dart';
 class TAppTheme {
   TAppTheme._();
 
-  static ThemeData lightTheme(ResponsiveSizeCubit responsiveSizeCubit) {
+  static ThemeData lightTheme(ResponsiveSizeCubit responsive) {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
@@ -30,7 +30,7 @@ class TAppTheme {
         ),
       ),
       iconTheme: const IconThemeData(color: Colors.white),
-      textTheme: TTextTheme.lightTextTheme(responsiveSizeCubit),
+      textTheme: TTextTheme.lightTextTheme(responsive),
     );
   }
 }
