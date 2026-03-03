@@ -119,7 +119,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
         if (_cameras.isEmpty) {
           _safeEmit(
-            const CameraFailure(errorTtype: CameraErrorType.noCamerasFound),
+            const CameraFailure(errorType: CameraErrorType.noCamerasFound),
           );
           return;
         }
@@ -169,13 +169,13 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       }
 
       _safeEmit(
-        const CameraFailure(errorTtype: CameraErrorType.initializationFailed),
+        const CameraFailure(errorType: CameraErrorType.initializationFailed),
       );
     } catch (e) {
       talker.error('Error initializing camera: $e');
 
       _safeEmit(
-        const CameraFailure(errorTtype: CameraErrorType.initializationFailed),
+        const CameraFailure(errorType: CameraErrorType.initializationFailed),
       );
       return;
     }

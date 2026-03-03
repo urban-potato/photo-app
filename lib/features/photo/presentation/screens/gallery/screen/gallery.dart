@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../shared/presentation/providers/responsive_size/index.dart'
     show ResponsiveSizeCubit;
 import '../../../provider/index.dart';
-import '../utils/photo_failure_message_helper.dart';
+import '../utils/photo_error_messages.dart';
 import '../widgets/app_bar.dart';
 import '../widgets/camera_button.dart';
 import '../../../../../../shared/presentation/ui/index.dart' show MessageView;
@@ -35,7 +35,7 @@ class GalleryScreen extends StatelessWidget {
                   final stateError = state.error;
                   if (stateError == null) return;
 
-                  final message = getPhotoFailureErrorMessage(stateError.type);
+                  final message = stateError.type.message;
                   final messanger = ScaffoldMessenger.of(context);
 
                   messanger.showSnackBar(SnackBar(content: Text(message)));

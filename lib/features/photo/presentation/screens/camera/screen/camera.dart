@@ -6,8 +6,7 @@ import '../../../../../../shared/presentation/ui/index.dart'
     show MessageWithButtonView;
 import '../../../provider/index.dart' show PhotoCubit;
 import '../provider/index.dart';
-import '../utils/camera_failure_message_helper.dart';
-import '../utils/permission_denied_message_helper.dart';
+import '../utils/camera_error_messages.dart';
 import '../widgets/camera_view/index.dart';
 
 class CameraScreen extends StatelessWidget {
@@ -68,7 +67,7 @@ class CameraScreen extends StatelessWidget {
     final cameraCubit = context.read<CameraCubit>();
 
     if (state is CameraPermissionDenied) {
-      final message = getPermissionDeniedMessage(state.permissionType);
+      final message = state.permissionType.message;
 
       return MessageWithButtonView(
         message: message,
@@ -78,7 +77,7 @@ class CameraScreen extends StatelessWidget {
     }
 
     if (state is CameraFailure) {
-      final message = getCameraFailureErrorMessage(state.errorTtype);
+      final message = state.errorType.message;
       return MessageWithButtonView(
         message: message,
         onPressed: cameraCubit.retryInitialization,

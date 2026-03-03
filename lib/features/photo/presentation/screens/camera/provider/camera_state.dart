@@ -53,12 +53,12 @@ class CameraReady extends CameraState {
 }
 
 class CameraFailure extends CameraState {
-  final CameraErrorType errorTtype;
+  final CameraErrorType errorType;
 
-  const CameraFailure({required this.errorTtype});
+  const CameraFailure({required this.errorType});
 
   @override
-  List<Object?> get props => [errorTtype];
+  List<Object?> get props => [errorType];
 }
 
 class CameraPictureTaken extends CameraState {
