@@ -1,7 +1,7 @@
 import 'dart:io' show File;
 import 'dart:typed_data' show Uint8List;
 
-import '../../../../shared/data_state/data_state.dart';
+import '../../../../shared/domain/data_states/data_state.dart';
 
 abstract interface class PhotoRepositoryI {
   Future<DataState<List<String>>> getAllPhotoPaths();

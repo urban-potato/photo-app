@@ -5,7 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
-import '../../../../../../shared/data_state/data_state.dart';
+import '../../../../../../shared/domain/data_states/data_state.dart';
 import '../../../../domain/repositories/photo.dart';
 import 'camera_state.dart';
 

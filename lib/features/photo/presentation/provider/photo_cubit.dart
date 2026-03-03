@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../shared/data_state/data_state.dart';
+import '../../../../shared/domain/data_states/data_state.dart';
 import '../../domain/repositories/photo.dart';
 import 'photo_state.dart';
 

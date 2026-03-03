@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart'
     show SharedPreferencesAsync;
 import 'package:talker_flutter/talker_flutter.dart' show Talker;
 
-import '../../../../shared/data_state/data_state.dart';
+import '../../../../shared/domain/data_states/data_state.dart';
 import '../../domain/repositories/photo.dart';
 import '../data_sources/photo.dart';
 

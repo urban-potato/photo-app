@@ -4,7 +4,7 @@ import 'dart:typed_data' show Uint8List;
 import 'package:path_provider/path_provider.dart';
 import 'package:talker_flutter/talker_flutter.dart' show Talker;
 
-import '../../../../shared/data_state/data_state.dart';
+import '../../../../shared/domain/data_states/data_state.dart';
 
 class PhotoDataSource {
   const PhotoDataSource({required this.talker});
