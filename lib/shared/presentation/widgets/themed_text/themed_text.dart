@@ -37,7 +37,10 @@ class ThemedText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var style = styleType.style(context);
+    final defaultTextColor = DefaultTextStyle.of(context).style.color;
+    var style = styleType
+        .style(context)
+        ?.copyWith(color: color ?? defaultTextColor);
 
     style = style?.copyWith(
       fontSize: fontSize ?? style.fontSize,

@@ -3,10 +3,10 @@ import 'package:flutter/services.dart' show SystemUiMode, SystemChrome;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:talker_flutter/talker_flutter.dart' show TalkerRouteObserver;
 
+import '../shared/presentation/theme/index.dart' show AppTheme;
 import 'app_config.dart';
 import 'app_initializer.dart';
 import '../shared/presentation/providers/responsive_size/index.dart';
-import 'theme/theme.dart';
 
 class App extends StatelessWidget {
   const App({super.key, required this.config});
@@ -29,7 +29,8 @@ class App extends StatelessWidget {
             ),
             debugShowCheckedModeBanner: false,
             title: 'Photo App',
-            theme: TAppTheme.lightTheme(responsive),
+            theme: AppTheme.light(responsive),
+            darkTheme: AppTheme.dark(responsive),
           );
         },
       ),

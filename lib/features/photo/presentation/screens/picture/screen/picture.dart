@@ -7,6 +7,7 @@ import 'package:photo_view/photo_view.dart';
 
 import '../../../provider/index.dart'
     show PhotoCubit, PhotoDeleteSuccess, PhotoState;
+import '../widgets/app_bar.dart';
 
 @RoutePage()
 class PictureScreen extends StatelessWidget {
@@ -16,20 +17,8 @@ class PictureScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final photoCubit = context.read<PhotoCubit>();
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Picture'),
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await photoCubit.deletePhoto(picturePath);
-            },
-            icon: const Icon(Icons.delete_rounded),
-          ),
-        ],
-      ),
+      appBar: PictureAppBar(picturePath: picturePath),
 
       body: SafeArea(
         child: BlocListener<PhotoCubit, PhotoState>(
@@ -44,6 +33,9 @@ class PictureScreen extends StatelessWidget {
             child: PhotoView(
               imageProvider: FileImage(File(picturePath)),
               heroAttributes: PhotoViewHeroAttributes(tag: picturePath),
+              backgroundDecoration: const BoxDecoration(
+                color: Colors.transparent,
+              ),
             ),
           ),
         ),

@@ -14,7 +14,7 @@ class MessageWithButtonView extends StatelessWidget {
 
   final String message;
   final String buttonText;
-  final Future<void> Function() onPressed;
+  final void Function() onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -40,13 +40,7 @@ class MessageWithButtonView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
 
-            ElevatedButton(
-              onPressed: onPressed,
-              child: ThemedText(
-                text: buttonText,
-                styleType: AppTextStyle.bodySmall,
-              ),
-            ),
+            ElevatedButton(onPressed: onPressed, child: Text(buttonText)),
           ],
         ),
       ),

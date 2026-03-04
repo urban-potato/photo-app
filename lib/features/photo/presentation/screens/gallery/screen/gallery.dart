@@ -17,7 +17,10 @@ class GalleryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: const CameraButton(),
+      floatingActionButton: const Align(
+        alignment: Alignment.bottomCenter,
+        child: CameraButton(),
+      ),
 
       body: SafeArea(
         child: CustomScrollView(
@@ -83,14 +86,10 @@ class GalleryScreen extends StatelessWidget {
         ? SliverFillRemaining(child: content)
         : content;
 
-    final screenVPadding = responsive.screenVPadding;
-    final screenHPadding = responsive.screenHPadding;
-
     return SliverPadding(
       padding: EdgeInsets.symmetric(
-        horizontal: screenHPadding,
-        vertical: screenVPadding,
-      ),
+        horizontal: responsive.screenHPadding,
+      ).copyWith(bottom: responsive.screenBPadding),
       sliver: internalSliver,
     );
   }

@@ -41,8 +41,6 @@ class CameraView extends StatelessWidget {
         return Stack(
           fit: StackFit.expand,
           children: [
-            const DecoratedBox(decoration: BoxDecoration(color: Colors.black)),
-
             Center(
               child: SizedBox(
                 height: previewSize.height,

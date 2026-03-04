@@ -2,6 +2,8 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../shared/presentation/providers/responsive_size/index.dart';
+import '../../../../../../shared/presentation/theme/index.dart' show AppTheme;
 import '../../../../../../shared/presentation/widgets/index.dart'
     show MessageWithButtonView;
 import '../../../provider/index.dart' show PhotoCubit;
@@ -14,27 +16,36 @@ class CameraScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final responsive = context.read<ResponsiveSizeCubit>();
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('New photo'),
-        elevation: 0,
-        backgroundColor:
-            theme.appBarTheme.backgroundColor?.withValues(alpha: 0.3) ??
-            Colors.black.withValues(alpha: 0.3),
-      ),
+    return Theme(
+      data: AppTheme.dark(responsive),
 
-      body: BlocConsumer<CameraCubit, CameraState>(
-        listener: (context, state) {
-          _handleStateChanges(context, state);
-        },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
 
-        builder: (context, state) {
-          return _buildContent(context, state);
-        },
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () {
+              if (context.mounted) {
+                final router = context.router;
+                router.maybePop();
+              }
+            },
+          ),
+          title: const Text('New photo'),
+        ),
+
+        body: BlocConsumer<CameraCubit, CameraState>(
+          listener: (context, state) {
+            _handleStateChanges(context, state);
+          },
+
+          builder: (context, state) {
+            return _buildContent(context, state);
+          },
+        ),
       ),
     );
   }

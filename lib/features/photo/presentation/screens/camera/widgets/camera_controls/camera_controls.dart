@@ -29,45 +29,38 @@ class CameraControls extends StatelessWidget {
       :takePicture,
     ) = cameraControlsProps;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.3)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Flexible(
-            flex: 1,
-            fit: FlexFit.tight,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SwitchCameraButton(switchCamera: switchCamera),
-                  TakeTimedPictureButton(
-                    takeTimedPicture: takeTimedPicture,
-                    isTimerActive: isTimerActive,
-                  ),
-                ],
-              ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SwitchCameraButton(switchCamera: switchCamera),
+                TakeTimedPictureButton(
+                  takeTimedPicture: takeTimedPicture,
+                  isTimerActive: isTimerActive,
+                ),
+              ],
             ),
           ),
+        ),
 
-          Flexible(flex: 1, child: TakePictureButton(takePicture: takePicture)),
+        TakePictureButton(takePicture: takePicture),
 
-          Flexible(
-            flex: 1,
-            fit: FlexFit.tight,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: SwitchFlashButton(
-                switchFlash: switchFlash,
-                hasFlashSupport: hasFlashSupport,
-                isFlashOn: isFlashOn,
-              ),
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: SwitchFlashButton(
+              switchFlash: switchFlash,
+              hasFlashSupport: hasFlashSupport,
+              isFlashOn: isFlashOn,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -18,8 +18,8 @@ class PhotosList extends StatelessWidget {
   Widget build(BuildContext context) {
     final responsive = context.watch<ResponsiveSizeCubit>();
 
-    final spacing = responsive.scaleLayout(15);
-    final borderRadius = responsive.radiusL;
+    final spacing = responsive.scaleLayout(8);
+    final borderRadius = responsive.radiusS;
 
     final config = PhotosGridConfig.get(
       isPortrait: responsive.state.isVertical,

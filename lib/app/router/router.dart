@@ -13,6 +13,14 @@ part 'router.gr.dart';
 @AutoRouterConfig()
 class AppRouter extends RootStackRouter {
   @override
+  RouteType get defaultRouteType => RouteType.custom(
+    transitionsBuilder: TransitionsBuilders.fadeIn,
+    duration: const Duration(milliseconds: 300),
+    reverseDuration: const Duration(milliseconds: 300),
+    opaque: true,
+  );
+
+  @override
   List<AutoRoute> get routes => [
     AutoRoute(
       page: PhotoFeatureRouteWrapper.page,

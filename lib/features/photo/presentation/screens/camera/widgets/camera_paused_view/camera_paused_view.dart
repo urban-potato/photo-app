@@ -11,13 +11,6 @@ class CameraPausedView extends StatelessWidget {
     final responsive = context.watch<ResponsiveSizeCubit>();
     final iconSize = responsive.scaleLayout(100);
 
-    return SizedBox.expand(
-      child: DecoratedBox(
-        decoration: const BoxDecoration(color: Colors.black),
-        child: Center(
-          child: Icon(Icons.camera_alt, size: iconSize, color: Colors.grey),
-        ),
-      ),
-    );
+    return Center(child: Icon(Icons.camera_alt, size: iconSize));
   }
 }

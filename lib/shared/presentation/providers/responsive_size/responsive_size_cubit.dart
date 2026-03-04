@@ -104,8 +104,9 @@ class ResponsiveSizeCubit extends Cubit<ResponsiveSizeState>
   double get paddingXL => scaleLayout(24);
   double get paddingXXL => scaleLayout(32);
 
-  double get screenHPadding => scaleLayout(16);
-  double get screenVPadding => scaleLayout(20);
+  double get screenHPadding => scaleLayout(12);
+  double get screenVPadding => scaleLayout(0);
+  double get screenBPadding => scaleLayout(8);
 
   // ---- Radius ----
   double get radiusXXS => scaleLayout(2);
