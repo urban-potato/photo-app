@@ -25,6 +25,7 @@ class CameraScreen extends StatelessWidget {
         extendBodyBehindAppBar: true,
 
         appBar: AppBar(
+          backgroundColor: Colors.transparent,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
             onPressed: () {
@@ -34,7 +35,7 @@ class CameraScreen extends StatelessWidget {
               }
             },
           ),
-          title: const Text('New photo'),
+          // title: const Text('New photo'),
         ),
 
         body: BlocConsumer<CameraCubit, CameraState>(
