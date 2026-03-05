@@ -35,7 +35,6 @@ class CameraScreen extends StatelessWidget {
               }
             },
           ),
-          // title: const Text('New photo'),
         ),
 
         body: BlocConsumer<CameraCubit, CameraState>(

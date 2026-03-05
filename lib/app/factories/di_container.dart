@@ -8,6 +8,9 @@ import '../../features/photo/domain/repositories/photo.dart';
 import '../../features/photo/presentation/provider/index.dart' show PhotoCubit;
 import '../../features/photo/presentation/screens/camera/provider/index.dart'
     show CameraCubit;
+import '../../shared/data/repositories/index.dart' show SettingsRepository;
+import '../../shared/domain/repositories/index.dart' show SettingsRepositoryI;
+import '../../shared/presentation/providers/settings/index.dart';
 import '../app_config.dart';
 import '../../shared/presentation/providers/responsive_size/index.dart'
     show ResponsiveSizeCubit;
@@ -39,4 +42,18 @@ void initializeDependencies({required AppConfig config}) {
   );
 
   di.registerSingleton<ResponsiveSizeCubit>(ResponsiveSizeCubit());
+
+  di.registerSingleton<SettingsRepositoryI>(
+    SettingsRepository(
+      prefs: di<SharedPreferencesAsync>(),
+      talker: config.talker,
+    ),
+  );
+
+  di.registerSingleton<SettingsCubit>(
+    SettingsCubit(
+      settingsRepo: di<SettingsRepositoryI>(),
+      talker: config.talker,
+    ),
+  );
 }

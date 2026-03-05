@@ -29,7 +29,7 @@ class GalleryScreen extends StatelessWidget {
           ),
 
           slivers: [
-            const AppBarWidget(),
+            const GalleryAppBar(),
 
             BlocConsumer<PhotoCubit, PhotoState>(
               listener: (context, state) {

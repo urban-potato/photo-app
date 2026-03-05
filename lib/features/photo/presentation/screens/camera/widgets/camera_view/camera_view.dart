@@ -41,7 +41,8 @@ class CameraView extends StatelessWidget {
         return Stack(
           fit: StackFit.expand,
           children: [
-            Center(
+            Align(
+              alignment: Alignment.bottomCenter,
               child: SizedBox(
                 height: previewSize.height,
                 width: previewSize.width,

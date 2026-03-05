@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show SystemUiMode, SystemChrome;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:talker_flutter/talker_flutter.dart' show TalkerRouteObserver;
 
+import '../shared/presentation/providers/settings/index.dart';
 import '../shared/presentation/theme/index.dart' show AppTheme;
 import 'app_config.dart';
 import 'app_initializer.dart';
@@ -15,22 +15,27 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
     return AppInitializer(
       config: config,
-      child: BlocBuilder<ResponsiveSizeCubit, ResponsiveSizeState>(
-        builder: (context, state) {
-          final responsive = context.watch<ResponsiveSizeCubit>();
+      child: BlocBuilder<SettingsCubit, SettingsState>(
+        builder: (context, settingsState) {
+          return BlocBuilder<ResponsiveSizeCubit, ResponsiveSizeState>(
+            builder: (context, responsiveSizeState) {
+              final responsive = context.watch<ResponsiveSizeCubit>();
 
-          return MaterialApp.router(
-            routerConfig: config.router.config(
-              navigatorObservers: () => [TalkerRouteObserver(config.talker)],
-            ),
-            debugShowCheckedModeBanner: false,
-            title: 'Photo App',
-            theme: AppTheme.light(responsive),
-            darkTheme: AppTheme.dark(responsive),
+              return MaterialApp.router(
+                routerConfig: config.router.config(
+                  navigatorObservers: () => [
+                    TalkerRouteObserver(config.talker),
+                  ],
+                ),
+                debugShowCheckedModeBanner: false,
+                title: 'Photo App',
+                theme: AppTheme.light(responsive),
+                darkTheme: AppTheme.dark(responsive),
+                themeMode: settingsState.settings.themeMode,
+              );
+            },
           );
         },
       ),

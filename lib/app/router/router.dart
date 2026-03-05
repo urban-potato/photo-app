@@ -1,10 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/widgets.dart' show Key;
 
-import '../../features/photo/presentation/screens/gallery/index.dart'
-    show GalleryScreen;
-import '../../features/photo/presentation/screens/picture/index.dart'
-    show PictureScreen;
+import '../../features/photo/index.dart' show GalleryScreen, PictureScreen;
+import '../../features/settings/index.dart' show SettingsScreen;
 import 'wrappers/camera.dart';
 import 'wrappers/photo.dart';
 
@@ -31,6 +29,7 @@ class AppRouter extends RootStackRouter {
         AutoRoute(page: GalleryRoute.page, path: 'gallery', initial: true),
         AutoRoute(page: CameraRoute.page, path: 'camera'),
         AutoRoute(page: PictureRoute.page, path: 'picture'),
+        AutoRoute(page: SettingsRoute.page, path: 'settings'),
       ],
     ),
   ];
