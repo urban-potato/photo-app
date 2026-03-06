@@ -17,10 +17,8 @@ class GalleryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: const Align(
-        alignment: Alignment.bottomCenter,
-        child: CameraButton(),
-      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: const CameraButton(),
 
       body: SafeArea(
         child: CustomScrollView(
