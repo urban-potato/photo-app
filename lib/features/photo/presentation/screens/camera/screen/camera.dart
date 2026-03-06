@@ -1,15 +1,19 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../shared/presentation/providers/responsive_size/index.dart';
 import '../../../../../../shared/presentation/theme/index.dart' show AppTheme;
+import '../../../../../../shared/presentation/utils/index.dart'
+    show getUpdatedSystemUiStyle;
 import '../../../../../../shared/presentation/widgets/index.dart'
     show MessageWithButtonView;
 import '../../../provider/index.dart' show PhotoCubit;
 import '../provider/index.dart';
 import '../utils/camera_error_messages.dart';
 import '../widgets/index.dart';
+import 'wrappers/system_ui.dart';
 
 class CameraScreen extends StatelessWidget {
   const CameraScreen({super.key});
@@ -17,34 +21,30 @@ class CameraScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final responsive = context.read<ResponsiveSizeCubit>();
+    final cameraTheme = AppTheme.dark(responsive);
 
     return Theme(
-      data: AppTheme.dark(responsive),
+      data: cameraTheme,
 
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () {
-              if (context.mounted) {
-                final router = context.router;
-                router.maybePop();
-              }
-            },
-          ),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: getUpdatedSystemUiStyle(
+          cameraTheme.brightness,
+          cameraTheme.colorScheme,
         ),
+        child: CameraSystemUi(
+          child: Scaffold(
+            body: SafeArea(
+              child: BlocConsumer<CameraCubit, CameraState>(
+                listener: (context, state) {
+                  _handleStateChanges(context, state);
+                },
 
-        body: BlocConsumer<CameraCubit, CameraState>(
-          listener: (context, state) {
-            _handleStateChanges(context, state);
-          },
-
-          builder: (context, state) {
-            return _buildContent(context, state);
-          },
+                builder: (context, state) {
+                  return _buildContent(context, state);
+                },
+              ),
+            ),
+          ),
         ),
       ),
     );

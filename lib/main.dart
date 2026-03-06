@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'
+    show SystemUiMode, SystemChrome, SystemUiOverlay;
 import 'package:flutter_bloc/flutter_bloc.dart' show Bloc;
 import 'package:talker_bloc_logger/talker_bloc_logger.dart'
     show TalkerBlocObserver, TalkerBlocLoggerSettings;
@@ -10,6 +12,13 @@ import 'app/factories/di_container.dart' show initializeDependencies;
 import 'app/router/router.dart' show AppRouter;
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.manual,
+    overlays: SystemUiOverlay.values,
+  );
+
   final router = AppRouter();
   final talker = TalkerFlutter.init();
   final appConfig = AppConfig(talker: talker, router: router);
