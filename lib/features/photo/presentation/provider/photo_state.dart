@@ -31,10 +31,3 @@ class PhotoFailure extends PhotoState {
 class PhotoDeleteSuccess extends PhotoState {
   const PhotoDeleteSuccess({super.photoPathsList});
 }
-
-class TypedError {
-  final PhotoErrorType type;
-  final Exception? error;
-
-  TypedError({required this.type, required this.error});
-}

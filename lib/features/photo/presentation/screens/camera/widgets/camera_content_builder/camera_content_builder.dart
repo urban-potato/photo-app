@@ -9,7 +9,8 @@ import '../../provider/index.dart';
 import '../camera_controls/camera_controls.dart' show CameraControlsProps;
 import '../camera_paused_view/camera_paused_view.dart';
 import '../camera_view/camera_view.dart';
-import '../countdown_display/countdown_display.dart' show CountDownProps;
+import '../camera_view/utils/index.dart' show getNewTargetAspectRatio;
+import '../camera_view/subwidgets/index.dart' show CameraPreviewProps;
 
 class CameraContentBuilder extends StatelessWidget {
   const CameraContentBuilder({super.key});
@@ -49,8 +50,12 @@ class CameraContentBuilder extends StatelessWidget {
 
   Widget _buildContent(BuildContext context, CameraState state) {
     final cameraCubit = context.read<CameraCubit>();
+    final controller = cameraCubit.controller;
 
-    if (state is CameraPermissionDenied) {
+    if (state is CameraReady &&
+        (controller == null || !controller.value.isInitialized)) {
+      return MessageWithButtonView(onPressed: cameraCubit.retryInitialization);
+    } else if (state is CameraPermissionDenied) {
       final message = state.permissionType.message;
 
       return MessageWithButtonView(
@@ -58,62 +63,90 @@ class CameraContentBuilder extends StatelessWidget {
         onPressed: cameraCubit.grantPermissionInSettings,
         buttonText: 'Open Settings',
       );
-    }
-
-    if (state is CameraFailure) {
+    } else if (state is CameraFailure) {
       final message = state.errorType.message;
       return MessageWithButtonView(
         message: message,
         onPressed: cameraCubit.retryInitialization,
       );
-    }
-
-    if (state is CameraPaused ||
+    } else if (state is CameraPaused ||
         state is CameraReadyPaused ||
         state is CameraClosed) {
       return const CameraPausedView();
-    }
+    } else if (state is CameraLoading || state is CameraInitial) {
+      return OrientationBuilder(
+        builder: (context, orientation) {
+          final CameraControlsProps cameraControlsProps = (
+            hasFlashSupport: false,
+            isFlashOn: false,
+            isTimerActive: false,
+            switchFlash: null,
+            switchCamera: null,
+            takeTimedPicture: null,
+            takePicture: null,
+            switchRatio: null,
+          );
 
-    if (state is CameraLoading || state is CameraInitial) {
-      return const Center(child: CircularProgressIndicator());
-    }
+          final CameraPreviewProps cameraPreviewProps = (
+            isCameraReady: false,
+            aspectRatio: null,
+            secondsLeft: null,
+          );
 
-    if (state is CameraPictureTaken) {
+          return CameraView(
+            cameraControlsProps: cameraControlsProps,
+            orientation: orientation,
+            cameraPreviewProps: cameraPreviewProps,
+          );
+        },
+      );
+    } else if (state is CameraReady) {
+      return OrientationBuilder(
+        builder: (context, orientation) {
+          final cameraCubit = context.read<CameraCubit>();
+
+          final targetAspectRatio = state.targetAspectRatio;
+
+          final targetAspectRatioNum = orientation == Orientation.portrait
+              ? targetAspectRatio.portrait
+              : targetAspectRatio.landscape;
+
+          final CameraControlsProps cameraControlsProps = (
+            hasFlashSupport: state.hasFlashSupport,
+            isFlashOn: state.isFlashOn,
+            isTimerActive: state.isTimerActive,
+            switchFlash: cameraCubit.switchFlash,
+            switchCamera: cameraCubit.switchCamera,
+            takeTimedPicture: () async {
+              await cameraCubit.takeTimedPicture(targetAspectRatioNum);
+            },
+            takePicture: () async {
+              await cameraCubit.takePicture(targetAspectRatioNum);
+            },
+            switchRatio: () async {
+              final newAspectRatio = getNewTargetAspectRatio(targetAspectRatio);
+              await cameraCubit.switchRatio(newAspectRatio);
+            },
+          );
+
+          final CameraPreviewProps cameraPreviewProps = (
+            isCameraReady: true,
+            aspectRatio: targetAspectRatio,
+            secondsLeft: state.secondsLeft,
+          );
+
+          return CameraView(
+            cameraControlsProps: cameraControlsProps,
+            orientation: orientation,
+            cameraPreviewProps: cameraPreviewProps,
+          );
+        },
+      );
+    } else if (state is CameraPictureTaken) {
       final picture = state.pictureFile;
 
       return Center(child: Image.file(picture));
-    }
-
-    if (state is CameraReady) {
-      final controller = cameraCubit.controller;
-
-      if (controller == null || !controller.value.isInitialized) {
-        return MessageWithButtonView(
-          onPressed: cameraCubit.retryInitialization,
-        );
-      }
-
-      final CountDownProps countDownProps = (secondsLeft: state.secondsLeft);
-      final CameraControlsProps cameraControlsProps = (
-        hasFlashSupport: state.hasFlashSupport,
-        isFlashOn: state.isFlashOn,
-        isTimerActive: state.isTimerActive,
-        switchFlash: cameraCubit.switchFlash,
-        switchCamera: cameraCubit.switchCamera,
-        takeTimedPicture: cameraCubit.takeTimedPicture,
-        takePicture: cameraCubit.takePicture,
-        switchRatio: cameraCubit.switchRatio,
-        currentAspectRatio: state.targetAspectRatio,
-      );
-
-      return CameraView(
-        controller: controller,
-        cameraControlsProps: cameraControlsProps,
-        countDownProps: countDownProps,
-      );
-    }
-
-    if (state is CameraPictureFailure) {
+    } else if (state is CameraPictureFailure) {
       return const Center(child: Text('Woops, something went wrong'));
     }
 

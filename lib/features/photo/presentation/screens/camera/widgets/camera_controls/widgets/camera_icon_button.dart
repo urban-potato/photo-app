@@ -11,22 +11,22 @@ class CameraIconButton extends StatelessWidget {
     required this.onPressed,
     this.iconSize,
     this.iconColor,
-    this.disabledIconColor,
   });
 
   final IconData icon;
   final VoidCallback? onPressed;
   final double? iconSize;
   final Color? iconColor;
-  final Color? disabledIconColor;
 
   @override
   Widget build(BuildContext context) {
     final responsive = context.watch<ResponsiveSizeCubit>();
     final iconSize = this.iconSize ?? responsive.iconM;
+    final disabledColor = Colors.grey[400];
 
     return IconButton(
       onPressed: onPressed,
+      disabledColor: disabledColor,
       icon: Icon(icon, size: iconSize, color: iconColor),
     );
   }

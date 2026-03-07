@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 
-import '../../../provider/index.dart' show CameraAspectRatio;
+import '../../../provider/index.dart';
 import '../../camera_controls/camera_controls.dart';
 import '../utils/index.dart' show calculatePreviewSize;
 
 class CameraControlsPositioned extends StatelessWidget {
   const CameraControlsPositioned({
     super.key,
-    required this.cameraControlsProps,
     required this.constraints,
     required this.orientation,
-    required this.targetAspectRatio,
+    required this.cameraControlsProps,
   });
 
-  final CameraControlsProps cameraControlsProps;
   final BoxConstraints constraints;
   final Orientation orientation;
-  final double targetAspectRatio;
+  final CameraControlsProps cameraControlsProps;
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +35,7 @@ class CameraControlsPositioned extends StatelessWidget {
       bottom: bottomOffset,
       left: 0,
       right: 0,
-      child: CameraControls(
-        cameraControlsProps,
-        targetRatio: targetAspectRatio,
-      ),
+      child: CameraControls(cameraControlsProps),
     );
   }
 }

@@ -8,7 +8,7 @@ import 'camera_icon_button.dart';
 class TakePictureButton extends StatelessWidget {
   const TakePictureButton({super.key, required this.takePicture});
 
-  final Future<void> Function() takePicture;
+  final Future<void> Function()? takePicture;
 
   @override
   Widget build(BuildContext context) {

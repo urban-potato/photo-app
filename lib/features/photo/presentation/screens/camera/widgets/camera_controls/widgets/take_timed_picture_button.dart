@@ -9,7 +9,7 @@ class TakeTimedPictureButton extends StatelessWidget {
     required this.isTimerActive,
   });
 
-  final Future<void> Function() takeTimedPicture;
+  final Future<void> Function()? takeTimedPicture;
   final bool isTimerActive;
 
   @override

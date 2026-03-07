@@ -1,3 +1,10 @@
+class TypedError {
+  final PhotoErrorType type;
+  final Exception? error;
+
+  TypedError({required this.type, required this.error});
+}
+
 enum PhotoErrorType { load, save, delete }
 
 extension PhotoErrorTypeMessage on PhotoErrorType {

@@ -325,7 +325,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
 
     safeEmit(const CameraClosed());
-    disposeController();
+    await disposeController();
     await super.close();
   }
 }

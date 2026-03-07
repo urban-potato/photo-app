@@ -1,29 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../../provider/index.dart' show CameraAspectRatio;
 import 'widgets/index.dart';
 
 typedef CameraControlsProps = ({
   bool hasFlashSupport,
   bool isFlashOn,
   bool isTimerActive,
-  Future<void> Function() switchFlash,
-  Future<void> Function() switchCamera,
-  void Function(CameraAspectRatio targetAspectRatio) switchRatio,
-  Future<void> Function(double targetRatio) takeTimedPicture,
-  Future<void> Function(double targetRatio) takePicture,
-  CameraAspectRatio currentAspectRatio,
+  Future<void> Function()? switchFlash,
+  Future<void> Function()? switchCamera,
+  void Function()? switchRatio,
+  Future<void> Function()? takeTimedPicture,
+  Future<void> Function()? takePicture,
 });
 
 class CameraControls extends StatelessWidget {
-  const CameraControls(
-    this.cameraControlsProps, {
-    super.key,
-    required this.targetRatio,
-  });
+  const CameraControls(this.cameraControlsProps, {super.key});
 
   final CameraControlsProps cameraControlsProps;
-  final double targetRatio;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +29,6 @@ class CameraControls extends StatelessWidget {
       :takeTimedPicture,
       :takePicture,
       :switchRatio,
-      :currentAspectRatio,
     ) = cameraControlsProps;
 
     return Row(
@@ -50,9 +42,7 @@ class CameraControls extends StatelessWidget {
               children: [
                 SwitchCameraButton(switchCamera: switchCamera),
                 TakeTimedPictureButton(
-                  takeTimedPicture: () async {
-                    await takeTimedPicture(targetRatio);
-                  },
+                  takeTimedPicture: takeTimedPicture,
                   isTimerActive: isTimerActive,
                 ),
               ],
@@ -60,11 +50,7 @@ class CameraControls extends StatelessWidget {
           ),
         ),
 
-        TakePictureButton(
-          takePicture: () async {
-            await takePicture(targetRatio);
-          },
-        ),
+        TakePictureButton(takePicture: takePicture),
 
         Expanded(
           child: Align(
@@ -77,10 +63,7 @@ class CameraControls extends StatelessWidget {
                   hasFlashSupport: hasFlashSupport,
                   isFlashOn: isFlashOn,
                 ),
-                SwitchRatioButton(
-                  switchRatio: switchRatio,
-                  currentRatio: currentAspectRatio,
-                ),
+                SwitchRatioButton(switchRatio: switchRatio),
               ],
             ),
           ),
