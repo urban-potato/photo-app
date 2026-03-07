@@ -37,9 +37,15 @@ class PhotoRepository implements PhotoRepositoryI {
   }
 
   @override
-  Future<DataState<File>> savePhoto(Uint8List bytes) async {
+  Future<DataState<File>> savePhoto(
+    Uint8List bytes,
+    double targetAspectRatio,
+  ) async {
     try {
-      final dataState = await _photoDataSource.savePhoto(bytes);
+      final dataState = await _photoDataSource.savePhoto(
+        bytes,
+        targetAspectRatio,
+      );
 
       switch (dataState) {
         case (DataSuccess _):

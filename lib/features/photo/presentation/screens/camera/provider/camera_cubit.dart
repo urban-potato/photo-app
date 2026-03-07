@@ -8,6 +8,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../../../../../shared/domain/data_states/data_state.dart';
 import '../../../../domain/repositories/photo.dart';
 import 'camera_state.dart';
+import 'enums/camera_aspect_ratio.dart';
 
 class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   CameraCubit({required PhotoRepositoryI photoRepository, required this.talker})
@@ -36,7 +37,26 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
   CameraController? get controller => _controller;
   bool get _isDisposed => !(_controller?.value.isInitialized ?? false);
 
-  Future<void> takeTimedPicture() async {
+  void switchRatio(CameraAspectRatio newAspectRatio) {
+    if (_isBusy || _isDisposed) return;
+    _isBusy = true;
+
+    final currentState = state;
+
+    if (currentState is! CameraReady || isClosed) {
+      _isBusy = false;
+      return;
+    }
+
+    talker.warning(
+      'CameraCubit switchRatio targetAspectRatio = $newAspectRatio',
+    );
+
+    _isBusy = false;
+    _safeEmit(currentState.copyWith(targetAspectRatio: newAspectRatio));
+  }
+
+  Future<void> takeTimedPicture(double targetRatio) async {
     if (_isBusy || _isDisposed) return;
     _isBusy = true;
 
@@ -50,12 +70,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       }
 
       _safeEmit(
-        CameraReady(
-          hasFlashSupport: currentState.hasFlashSupport,
-          isFlashOn: currentState.isFlashOn,
-          secondsLeft: secondsLeft,
-          isTimerActive: true,
-        ),
+        currentState.copyWith(secondsLeft: secondsLeft, isTimerActive: true),
       );
 
       await Future.delayed(const Duration(seconds: countDownPeriod));
@@ -67,16 +82,13 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       _isBusy = false;
       return;
     }
+
     _safeEmit(
-      CameraReady(
-        hasFlashSupport: currentState.hasFlashSupport,
-        isFlashOn: currentState.isFlashOn,
-        secondsLeft: secondsLeft,
-      ),
+      currentState.copyWith(secondsLeft: secondsLeft, isTimerActive: false),
     );
 
     _isBusy = false;
-    await takePicture();
+    await takePicture(targetRatio);
   }
 
   void _safeEmit(CameraState state) {
@@ -85,6 +97,9 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
   Future<void> _setupCamera(int index) async {
     if (isClosed) return;
+
+    CameraState prevState = state;
+
     _safeEmit(const CameraLoading());
 
     try {
@@ -128,6 +143,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
       final targetIndex = index % _cameras.length;
       await _controller?.dispose();
+      await Future.delayed(const Duration(milliseconds: 100));
       _controller = null;
       if (isClosed) return;
 
@@ -181,7 +197,24 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       return;
     }
 
-    _safeEmit(CameraReady(hasFlashSupport: _hasFlashSupport));
+    if (prevState is CameraReady) {
+      _safeEmit(
+        CameraReady(
+          hasFlashSupport: _hasFlashSupport,
+          targetAspectRatioPortrait: prevState.targetAspectRatioPortrait,
+        ),
+      );
+    } else if (prevState is CameraReadyPaused) {
+      _safeEmit(
+        CameraReady(
+          hasFlashSupport: _hasFlashSupport,
+          isFlashOn: prevState.isFlashOn,
+          targetAspectRatioPortrait: prevState.targetAspectRatio,
+        ),
+      );
+    } else {
+      _safeEmit(CameraReady(hasFlashSupport: _hasFlashSupport));
+    }
   }
 
   Future<void> switchCamera() async {
@@ -213,14 +246,17 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
       if (!_hasFlashSupport) {
         final currentState = state;
-        if (currentState is! CameraReady) return;
-        _safeEmit(
-          CameraReady(
-            isFlashOn: currentState.isFlashOn,
-            hasFlashSupport: false,
-            warningMessage: 'No flash available on this camera',
-          ),
-        );
+        if (currentState is CameraReady) {
+          _safeEmit(
+            CameraReady(
+              targetAspectRatioPortrait: currentState.targetAspectRatioPortrait,
+              isFlashOn: false,
+              hasFlashSupport: false,
+              message: 'No flash available on this camera',
+            ),
+          );
+        }
+
         return;
       }
 
@@ -248,32 +284,50 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
         talker.warning('Flash not applied: likely no support');
 
         _hasFlashSupport = false;
-        _safeEmit(
-          const CameraReady(
-            isFlashOn: false,
-            hasFlashSupport: false,
-            warningMessage: 'No flash available on this camera',
-          ),
-        );
+
+        final currentState = state;
+        if (currentState is CameraReady) {
+          _safeEmit(
+            CameraReady(
+              targetAspectRatioPortrait: currentState.targetAspectRatioPortrait,
+              isFlashOn: false,
+              hasFlashSupport: false,
+              message: 'No flash available on this camera',
+            ),
+          );
+        }
+
         return;
       }
 
-      _safeEmit(
-        CameraReady(isFlashOn: newIsFlashOn, hasFlashSupport: _hasFlashSupport),
-      );
+      final currentState = state;
+      if (currentState is CameraReady) {
+        _safeEmit(
+          CameraReady(
+            targetAspectRatioPortrait: currentState.targetAspectRatioPortrait,
+            isFlashOn: newIsFlashOn,
+            hasFlashSupport: _hasFlashSupport,
+          ),
+        );
+      }
     } on CameraException catch (e) {
       talker.error('CameraException switching flash: $e');
 
       if (controller != _controller || isClosed || _isDisposed) return;
 
       _hasFlashSupport = false;
-      _safeEmit(
-        const CameraReady(
-          isFlashOn: false,
-          hasFlashSupport: false,
-          warningMessage: 'No flash available on this camera',
-        ),
-      );
+
+      final currentState = state;
+      if (currentState is CameraReady) {
+        _safeEmit(
+          CameraReady(
+            targetAspectRatioPortrait: currentState.targetAspectRatioPortrait,
+            isFlashOn: false,
+            hasFlashSupport: false,
+            message: 'No flash available on this camera',
+          ),
+        );
+      }
     } catch (e) {
       talker.error('Error switching flash: $e');
 
@@ -288,9 +342,10 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       if (currentState is CameraReady) {
         _safeEmit(
           CameraReady(
-            isFlashOn: currentState.isFlashOn,
-            hasFlashSupport: currentState.hasFlashSupport,
-            warningMessage: 'Something went wrong',
+            targetAspectRatioPortrait: currentState.targetAspectRatioPortrait,
+            isFlashOn: false,
+            hasFlashSupport: false,
+            message: 'Something went wrong',
           ),
         );
       }
@@ -299,8 +354,8 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> takePicture() async {
-    if (_isBusy || _isDisposed) return;
+  Future<void> takePicture(double targetRatio) async {
+    if (_isBusy || _isDisposed || state is! CameraReady) return;
     _isBusy = true;
 
     try {
@@ -329,20 +384,31 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
           return;
         }
 
-        final dataState = await _photoRepository.savePhoto(bytes);
+        final currentState = state;
+        if (currentState is CameraReady) {
+          final dataState = await _photoRepository.savePhoto(
+            bytes,
+            targetRatio,
+          );
 
-        switch (dataState) {
-          case (DataSuccess _):
-            {
-              final file = dataState.data!;
-              _isBusy = false;
-              _safeEmit(CameraPictureTaken(pictureFile: file));
-            }
-          case (DataFailed _):
-            {
-              _isBusy = false;
-              _safeEmit(const CameraPictureFailure());
-            }
+          switch (dataState) {
+            case (DataSuccess _):
+              {
+                final file = dataState.data!;
+                _isBusy = false;
+                _safeEmit(CameraPictureTaken(pictureFile: file));
+              }
+            case (DataFailed _):
+              {
+                _safeEmit(const CameraPictureFailure());
+
+                await _setupCamera(_selectedIndex);
+                _isBusy = false;
+              }
+          }
+        } else {
+          _isBusy = false;
+          return;
         }
       });
     } catch (e) {
@@ -354,13 +420,15 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
 
       _safeEmit(const CameraPictureFailure());
 
+      await _setupCamera(_selectedIndex);
       _isBusy = false;
-      _setupCamera(_selectedIndex);
     }
   }
 
   Future<void> retryInitialization() async {
+    _isBusy = true;
     await _setupCamera(_selectedIndex);
+    _isBusy = false;
   }
 
   Future<void> grantPermissionInSettings() async {
@@ -384,7 +452,19 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       _permissionDialogCausedPause = true;
     }
 
-    _safeEmit(const CameraPaused());
+    final currentState = state;
+
+    if (currentState is CameraReady) {
+      _safeEmit(
+        CameraReadyPaused(
+          hasFlashSupport: currentState.hasFlashSupport,
+          isFlashOn: currentState.isFlashOn,
+          targetAspectRatio: currentState.targetAspectRatioPortrait,
+        ),
+      );
+    } else {
+      _safeEmit(const CameraPaused());
+    }
 
     await _lock.synchronized(() async {
       final controller = _controller;
@@ -394,6 +474,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       if (controller == null) return;
 
       await controller.dispose();
+      await Future.delayed(const Duration(milliseconds: 100));
     });
   }
 
@@ -403,6 +484,7 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
       return;
     }
 
+    _isBusy = true;
     await _setupCamera(_selectedIndex);
     _isBusy = false;
   }
@@ -414,9 +496,10 @@ class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
     final controller = _controller;
 
     return await _lock.synchronized(() async {
-      _safeEmit(const CameraPaused());
+      _safeEmit(const CameraClosed());
 
       await controller?.dispose();
+      await Future.delayed(const Duration(milliseconds: 100));
 
       if (_controller == controller) {
         _controller = null;

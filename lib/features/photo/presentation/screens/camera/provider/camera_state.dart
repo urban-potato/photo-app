@@ -2,6 +2,8 @@ import 'dart:io' show File;
 
 import 'package:equatable/equatable.dart';
 
+import 'enums/camera_aspect_ratio.dart';
+
 abstract class CameraState extends Equatable {
   const CameraState();
 
@@ -31,14 +33,16 @@ class CameraReady extends CameraState {
   final bool hasFlashSupport;
   final bool isTimerActive;
   final int? secondsLeft;
-  final String? warningMessage;
+  final String? message;
+  final CameraAspectRatio targetAspectRatioPortrait;
 
   const CameraReady({
     this.isFlashOn = false,
     this.hasFlashSupport = true,
     this.isTimerActive = false,
     this.secondsLeft,
-    this.warningMessage,
+    this.message,
+    this.targetAspectRatioPortrait = CameraAspectRatio.small,
   });
 
   @override
@@ -47,8 +51,27 @@ class CameraReady extends CameraState {
     hasFlashSupport,
     isTimerActive,
     secondsLeft,
-    warningMessage,
+    message,
+    targetAspectRatioPortrait,
   ];
+
+  CameraReady copyWith({
+    bool? isFlashOn,
+    bool? hasFlashSupport,
+    bool? isTimerActive,
+    int? secondsLeft,
+    String? warningMessage,
+    CameraAspectRatio? targetAspectRatio,
+  }) {
+    return CameraReady(
+      isFlashOn: isFlashOn ?? this.isFlashOn,
+      hasFlashSupport: hasFlashSupport ?? this.hasFlashSupport,
+      isTimerActive: isTimerActive ?? this.isTimerActive,
+      secondsLeft: secondsLeft ?? this.secondsLeft,
+      message: warningMessage,
+      targetAspectRatioPortrait: targetAspectRatio ?? targetAspectRatioPortrait,
+    );
+  }
 }
 
 class CameraFailure extends CameraState {
@@ -73,8 +96,27 @@ class CameraPictureFailure extends CameraState {
   const CameraPictureFailure();
 }
 
+class CameraReadyPaused extends CameraState {
+  final bool isFlashOn;
+  final bool hasFlashSupport;
+  final CameraAspectRatio targetAspectRatio;
+
+  const CameraReadyPaused({
+    required this.isFlashOn,
+    required this.hasFlashSupport,
+    required this.targetAspectRatio,
+  });
+
+  @override
+  List<Object?> get props => [isFlashOn, hasFlashSupport, targetAspectRatio];
+}
+
 class CameraPaused extends CameraState {
   const CameraPaused();
+}
+
+class CameraClosed extends CameraState {
+  const CameraClosed();
 }
 
 enum CameraErrorType { noCamerasFound, initializationFailed, generic }

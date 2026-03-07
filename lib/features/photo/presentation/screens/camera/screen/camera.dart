@@ -52,7 +52,7 @@ class CameraScreen extends StatelessWidget {
 
   void _handleStateChanges(BuildContext context, CameraState state) {
     if (state is CameraReady) {
-      final warningMessage = state.warningMessage;
+      final warningMessage = state.message;
       if (warningMessage == null) return;
 
       final messenger = ScaffoldMessenger.of(context);
@@ -96,7 +96,9 @@ class CameraScreen extends StatelessWidget {
       );
     }
 
-    if (state is CameraPaused) {
+    if (state is CameraPaused ||
+        state is CameraReadyPaused ||
+        state is CameraClosed) {
       return const CameraPausedView();
     }
 
@@ -113,7 +115,7 @@ class CameraScreen extends StatelessWidget {
     if (state is CameraReady) {
       final controller = cameraCubit.controller;
 
-      if (controller == null) {
+      if (controller == null || !controller.value.isInitialized) {
         return MessageWithButtonView(
           onPressed: cameraCubit.retryInitialization,
         );
@@ -128,6 +130,8 @@ class CameraScreen extends StatelessWidget {
         switchCamera: cameraCubit.switchCamera,
         takeTimedPicture: cameraCubit.takeTimedPicture,
         takePicture: cameraCubit.takePicture,
+        switchRatio: cameraCubit.switchRatio,
+        currentAspectRatio: state.targetAspectRatioPortrait,
       );
 
       return CameraView(
@@ -137,6 +141,10 @@ class CameraScreen extends StatelessWidget {
       );
     }
 
-    return const Center(child: Text('Woops, something went wrong'));
+    if (state is CameraPictureFailure) {
+      return const Center(child: Text('Woops, something went wrong'));
+    }
+
+    return MessageWithButtonView(onPressed: cameraCubit.retryInitialization);
   }
 }

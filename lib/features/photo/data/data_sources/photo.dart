@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:talker_flutter/talker_flutter.dart' show Talker;
 
 import '../../../../shared/domain/data_states/data_state.dart';
+import '../utils/crop_image_helper.dart';
 
 class PhotoDataSource {
   const PhotoDataSource({required this.talker});
@@ -13,7 +14,10 @@ class PhotoDataSource {
 
   final Talker talker;
 
-  Future<DataState<File>> savePhoto(Uint8List bytes) async {
+  Future<DataState<File>> savePhoto(
+    Uint8List bytes,
+    double targetAspectRatio,
+  ) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final appDir = await getApplicationDocumentsDirectory();
@@ -24,9 +28,11 @@ class PhotoDataSource {
         await photosDir.create(recursive: true);
       }
 
+      final croppedBytes = await cropImageToRatio(bytes, targetAspectRatio);
+
       final path = '${photosDir.path}/$timestamp.jpg';
       final file = File(path);
-      final result = await file.writeAsBytes(bytes);
+      final result = await file.writeAsBytes(croppedBytes);
 
       return DataSuccess(data: result);
     } catch (e) {

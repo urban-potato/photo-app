@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../provider/index.dart' show CameraAspectRatio;
 import 'widgets/index.dart';
 
 typedef CameraControlsProps = ({
@@ -8,14 +9,21 @@ typedef CameraControlsProps = ({
   bool isTimerActive,
   Future<void> Function() switchFlash,
   Future<void> Function() switchCamera,
-  Future<void> Function() takeTimedPicture,
-  Future<void> Function() takePicture,
+  void Function(CameraAspectRatio targetAspectRatio) switchRatio,
+  Future<void> Function(double targetRatio) takeTimedPicture,
+  Future<void> Function(double targetRatio) takePicture,
+  CameraAspectRatio currentAspectRatio,
 });
 
 class CameraControls extends StatelessWidget {
-  const CameraControls(this.cameraControlsProps, {super.key});
+  const CameraControls(
+    this.cameraControlsProps, {
+    super.key,
+    required this.targetRatio,
+  });
 
   final CameraControlsProps cameraControlsProps;
+  final double targetRatio;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +35,8 @@ class CameraControls extends StatelessWidget {
       :switchCamera,
       :takeTimedPicture,
       :takePicture,
+      :switchRatio,
+      :currentAspectRatio,
     ) = cameraControlsProps;
 
     return Row(
@@ -40,7 +50,9 @@ class CameraControls extends StatelessWidget {
               children: [
                 SwitchCameraButton(switchCamera: switchCamera),
                 TakeTimedPictureButton(
-                  takeTimedPicture: takeTimedPicture,
+                  takeTimedPicture: () async {
+                    await takeTimedPicture(targetRatio);
+                  },
                   isTimerActive: isTimerActive,
                 ),
               ],
@@ -48,15 +60,28 @@ class CameraControls extends StatelessWidget {
           ),
         ),
 
-        TakePictureButton(takePicture: takePicture),
+        TakePictureButton(
+          takePicture: () async {
+            await takePicture(targetRatio);
+          },
+        ),
 
         Expanded(
           child: Align(
             alignment: Alignment.centerLeft,
-            child: SwitchFlashButton(
-              switchFlash: switchFlash,
-              hasFlashSupport: hasFlashSupport,
-              isFlashOn: isFlashOn,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SwitchFlashButton(
+                  switchFlash: switchFlash,
+                  hasFlashSupport: hasFlashSupport,
+                  isFlashOn: isFlashOn,
+                ),
+                SwitchRatioButton(
+                  switchRatio: switchRatio,
+                  currentRatio: currentAspectRatio,
+                ),
+              ],
             ),
           ),
         ),

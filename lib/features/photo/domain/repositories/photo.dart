@@ -5,6 +5,6 @@ import '../../../../shared/domain/data_states/data_state.dart';
 
 abstract interface class PhotoRepositoryI {
   Future<DataState<List<String>>> getAllPhotoPaths();
-  Future<DataState<File>> savePhoto(Uint8List bytes);
+  Future<DataState<File>> savePhoto(Uint8List bytes, double targetAspectRatio);
   Future<DataState<String>> deletePhoto(String path);
 }
