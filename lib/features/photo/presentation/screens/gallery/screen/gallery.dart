@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../shared/presentation/providers/responsive_size/index.dart'
     show ResponsiveSizeCubit;
 import '../../../provider/index.dart';
-import '../utils/photo_error_messages.dart';
 import '../../../../../../shared/presentation/widgets/index.dart'
     show MessageView;
 import '../widgets/index.dart';

@@ -1,4 +1,4 @@
-import '../../../provider/index.dart' show PhotoErrorType;
+enum PhotoErrorType { load, save, delete }
 
 extension PhotoErrorTypeMessage on PhotoErrorType {
   String get message => switch (this) {

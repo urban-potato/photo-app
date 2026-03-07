@@ -2,9 +2,9 @@ import 'dart:io' show File;
 
 import 'package:equatable/equatable.dart';
 
-import 'enums/camera_aspect_ratio.dart';
+import 'types/index.dart';
 
-abstract class CameraState extends Equatable {
+sealed class CameraState extends Equatable {
   const CameraState();
 
   @override
@@ -34,7 +34,7 @@ class CameraReady extends CameraState {
   final bool isTimerActive;
   final int? secondsLeft;
   final String? message;
-  final CameraAspectRatio targetAspectRatioPortrait;
+  final CameraAspectRatio targetAspectRatio;
 
   const CameraReady({
     this.isFlashOn = false,
@@ -42,7 +42,7 @@ class CameraReady extends CameraState {
     this.isTimerActive = false,
     this.secondsLeft,
     this.message,
-    this.targetAspectRatioPortrait = CameraAspectRatio.small,
+    this.targetAspectRatio = CameraAspectRatio.small,
   });
 
   @override
@@ -52,7 +52,7 @@ class CameraReady extends CameraState {
     isTimerActive,
     secondsLeft,
     message,
-    targetAspectRatioPortrait,
+    targetAspectRatio,
   ];
 
   CameraReady copyWith({
@@ -60,7 +60,7 @@ class CameraReady extends CameraState {
     bool? hasFlashSupport,
     bool? isTimerActive,
     int? secondsLeft,
-    String? warningMessage,
+    String? message,
     CameraAspectRatio? targetAspectRatio,
   }) {
     return CameraReady(
@@ -68,8 +68,8 @@ class CameraReady extends CameraState {
       hasFlashSupport: hasFlashSupport ?? this.hasFlashSupport,
       isTimerActive: isTimerActive ?? this.isTimerActive,
       secondsLeft: secondsLeft ?? this.secondsLeft,
-      message: warningMessage,
-      targetAspectRatioPortrait: targetAspectRatio ?? targetAspectRatioPortrait,
+      message: message,
+      targetAspectRatio: targetAspectRatio ?? this.targetAspectRatio,
     );
   }
 }
@@ -118,7 +118,3 @@ class CameraPaused extends CameraState {
 class CameraClosed extends CameraState {
   const CameraClosed();
 }
-
-enum CameraErrorType { noCamerasFound, initializationFailed, generic }
-
-enum PermissionType { camera, microphone }

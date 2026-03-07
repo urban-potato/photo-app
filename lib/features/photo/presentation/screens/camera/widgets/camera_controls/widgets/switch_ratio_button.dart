@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../../../../../../../../shared/presentation/providers/responsive_size/index.dart'
-    show ResponsiveSizeCubit;
 import '../../../provider/index.dart' show CameraAspectRatio;
+import 'camera_icon_button.dart';
 
 class SwitchRatioButton extends StatelessWidget {
   const SwitchRatioButton({
@@ -17,23 +15,21 @@ class SwitchRatioButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = context.watch<ResponsiveSizeCubit>();
-    final iconSize = responsive.iconM;
+    void onPressed() {
+      final cameraRatios = CameraAspectRatio.values;
+      final currentRatioIndex = currentRatio.index;
+      final incrementedRatioIndex = currentRatioIndex + 1;
+      final newRationIndex = incrementedRatioIndex >= cameraRatios.length
+          ? 0
+          : incrementedRatioIndex;
+      final newTargetAspectRatio = cameraRatios[newRationIndex];
 
-    return IconButton(
-      onPressed: () {
-        final cameraRatios = CameraAspectRatio.values;
+      switchRatio(newTargetAspectRatio);
+    }
 
-        final currentRatioIndex = currentRatio.index;
-        final incrementedRatioIndex = currentRatioIndex + 1;
-        final newRationIndex = incrementedRatioIndex >= cameraRatios.length
-            ? 0
-            : incrementedRatioIndex;
-        final newTargetAspectRatio = cameraRatios[newRationIndex];
-
-        switchRatio(newTargetAspectRatio);
-      },
-      icon: Icon(Icons.aspect_ratio_rounded, size: iconSize),
+    return CameraIconButton(
+      icon: Icons.aspect_ratio_rounded,
+      onPressed: onPressed,
     );
   }
 }

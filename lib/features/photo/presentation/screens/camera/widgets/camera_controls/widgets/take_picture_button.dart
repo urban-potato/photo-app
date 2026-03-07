@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../../../../../../../shared/presentation/providers/responsive_size/index.dart'
     show ResponsiveSizeCubit;
+import 'camera_icon_button.dart';
 
 class TakePictureButton extends StatelessWidget {
   const TakePictureButton({super.key, required this.takePicture});
@@ -17,11 +18,9 @@ class TakePictureButton extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: paddingV),
-      child: IconButton(
-        onPressed: () async {
-          await takePicture();
-        },
-        icon: const Icon(Icons.camera),
+      child: CameraIconButton(
+        icon: Icons.camera,
+        onPressed: takePicture,
         iconSize: iconSize,
       ),
     );

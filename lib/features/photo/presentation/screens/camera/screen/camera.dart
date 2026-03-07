@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,11 +6,6 @@ import '../../../../../../shared/presentation/providers/responsive_size/index.da
 import '../../../../../../shared/presentation/theme/index.dart' show AppTheme;
 import '../../../../../../shared/presentation/utils/index.dart'
     show getUpdatedSystemUiStyle;
-import '../../../../../../shared/presentation/widgets/index.dart'
-    show MessageWithButtonView;
-import '../../../provider/index.dart' show PhotoCubit;
-import '../provider/index.dart';
-import '../utils/camera_error_messages.dart';
 import '../widgets/index.dart';
 import 'wrappers/system_ui.dart';
 
@@ -25,126 +19,15 @@ class CameraScreen extends StatelessWidget {
 
     return Theme(
       data: cameraTheme,
-
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: getUpdatedSystemUiStyle(
           cameraTheme.brightness,
           cameraTheme.colorScheme,
         ),
-        child: CameraSystemUi(
-          child: Scaffold(
-            body: SafeArea(
-              child: BlocConsumer<CameraCubit, CameraState>(
-                listener: (context, state) {
-                  _handleStateChanges(context, state);
-                },
-
-                builder: (context, state) {
-                  return _buildContent(context, state);
-                },
-              ),
-            ),
-          ),
+        child: const CameraSystemUi(
+          child: Scaffold(body: SafeArea(child: CameraContentBuilder())),
         ),
       ),
     );
-  }
-
-  void _handleStateChanges(BuildContext context, CameraState state) {
-    if (state is CameraReady) {
-      final warningMessage = state.message;
-      if (warningMessage == null) return;
-
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.showSnackBar(SnackBar(content: Text(warningMessage)));
-    }
-
-    if (state is CameraPictureTaken && context.mounted) {
-      final photoCubit = context.read<PhotoCubit>();
-      final router = context.router;
-
-      router.popUntil((route) => route.isFirst);
-      photoCubit.loadPhotoPaths();
-    }
-
-    if (state is CameraPictureFailure && context.mounted) {
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Failed to capture photo')),
-      );
-    }
-  }
-
-  Widget _buildContent(BuildContext context, CameraState state) {
-    final cameraCubit = context.read<CameraCubit>();
-
-    if (state is CameraPermissionDenied) {
-      final message = state.permissionType.message;
-
-      return MessageWithButtonView(
-        message: message,
-        onPressed: cameraCubit.grantPermissionInSettings,
-        buttonText: 'Open Settings',
-      );
-    }
-
-    if (state is CameraFailure) {
-      final message = state.errorType.message;
-      return MessageWithButtonView(
-        message: message,
-        onPressed: cameraCubit.retryInitialization,
-      );
-    }
-
-    if (state is CameraPaused ||
-        state is CameraReadyPaused ||
-        state is CameraClosed) {
-      return const CameraPausedView();
-    }
-
-    if (state is CameraLoading || state is CameraInitial) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (state is CameraPictureTaken) {
-      final picture = state.pictureFile;
-
-      return Center(child: Image.file(picture));
-    }
-
-    if (state is CameraReady) {
-      final controller = cameraCubit.controller;
-
-      if (controller == null || !controller.value.isInitialized) {
-        return MessageWithButtonView(
-          onPressed: cameraCubit.retryInitialization,
-        );
-      }
-
-      final CountDownProps countDownProps = (secondsLeft: state.secondsLeft);
-      final CameraControlsProps cameraControlsProps = (
-        hasFlashSupport: state.hasFlashSupport,
-        isFlashOn: state.isFlashOn,
-        isTimerActive: state.isTimerActive,
-        switchFlash: cameraCubit.switchFlash,
-        switchCamera: cameraCubit.switchCamera,
-        takeTimedPicture: cameraCubit.takeTimedPicture,
-        takePicture: cameraCubit.takePicture,
-        switchRatio: cameraCubit.switchRatio,
-        currentAspectRatio: state.targetAspectRatioPortrait,
-      );
-
-      return CameraView(
-        controller: controller,
-        cameraControlsProps: cameraControlsProps,
-        countDownProps: countDownProps,
-      );
-    }
-
-    if (state is CameraPictureFailure) {
-      return const Center(child: Text('Woops, something went wrong'));
-    }
-
-    return MessageWithButtonView(onPressed: cameraCubit.retryInitialization);
   }
 }

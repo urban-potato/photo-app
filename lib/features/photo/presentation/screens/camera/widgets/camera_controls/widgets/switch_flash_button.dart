@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../../../../../../../../shared/presentation/providers/responsive_size/index.dart'
-    show ResponsiveSizeCubit;
+import 'camera_icon_button.dart';
 
 class SwitchFlashButton extends StatelessWidget {
   const SwitchFlashButton({
@@ -23,13 +21,11 @@ class SwitchFlashButton extends StatelessWidget {
     final flashIcon = isFlashOn
         ? Icons.flash_on_rounded
         : Icons.flash_off_rounded;
-    final responsive = context.watch<ResponsiveSizeCubit>();
-    final iconSize = responsive.iconM;
 
-    return IconButton(
+    return CameraIconButton(
+      icon: flashIcon,
       onPressed: onPressed,
-      icon: Icon(flashIcon, size: iconSize),
-      disabledColor: disabledColor,
+      disabledIconColor: disabledColor,
     );
   }
 }

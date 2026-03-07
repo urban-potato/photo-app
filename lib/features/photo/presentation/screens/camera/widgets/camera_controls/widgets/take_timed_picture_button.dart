@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../../../../../../../../shared/presentation/providers/responsive_size/index.dart'
-    show ResponsiveSizeCubit;
+import 'camera_icon_button.dart';
 
 class TakeTimedPictureButton extends StatelessWidget {
   const TakeTimedPictureButton({
@@ -17,14 +15,11 @@ class TakeTimedPictureButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timerColor = isTimerActive ? Colors.yellow : null;
-    final responsive = context.watch<ResponsiveSizeCubit>();
-    final iconSize = responsive.iconM;
 
-    return IconButton(
-      onPressed: () async {
-        await takeTimedPicture();
-      },
-      icon: Icon(Icons.timer_rounded, size: iconSize, color: timerColor),
+    return CameraIconButton(
+      icon: Icons.timer_rounded,
+      onPressed: takeTimedPicture,
+      iconColor: timerColor,
     );
   }
 }

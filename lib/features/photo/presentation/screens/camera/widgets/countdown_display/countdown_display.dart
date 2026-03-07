@@ -15,20 +15,29 @@ class CountdownDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     final secondsLeft = countDownProps.secondsLeft ?? 0;
     final responsive = context.watch<ResponsiveSizeCubit>();
-    final fontSize = responsive.textHuge;
 
-    return (secondsLeft > 0)
-        ? Center(
-            child: Text(
-              '$secondsLeft',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.4),
-                fontWeight: FontWeight.bold,
-                fontSize: fontSize,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          )
-        : const SizedBox.shrink();
+    return _buildContent(secondsLeft, responsive);
+  }
+
+  Widget _buildContent(int secondsLeft, ResponsiveSizeCubit responsive) {
+    Widget widget;
+
+    if (secondsLeft > 0) {
+      widget = Center(
+        child: Text(
+          '$secondsLeft',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.4),
+            fontWeight: FontWeight.bold,
+            fontSize: responsive.textHuge,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    } else {
+      widget = const SizedBox.shrink();
+    }
+
+    return widget;
   }
 }

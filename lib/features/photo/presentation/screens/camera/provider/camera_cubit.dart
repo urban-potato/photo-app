@@ -1,510 +1,331 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../../../shared/domain/data_states/data_state.dart';
 import '../../../../domain/repositories/photo.dart';
+import 'constants/constants.dart';
+import 'types/index.dart';
+import 'utils/index.dart' show CameraPermissionHandler;
 import 'camera_state.dart';
-import 'enums/camera_aspect_ratio.dart';
 
 class CameraCubit extends Cubit<CameraState> with WidgetsBindingObserver {
-  CameraCubit({required PhotoRepositoryI photoRepository, required this.talker})
-    : _photoRepository = photoRepository,
-      super(const CameraInitial()) {
+  CameraCubit({
+    required PhotoRepositoryI photoRepository,
+    required Talker talker,
+  }) : _talker = talker,
+       _photoRepository = photoRepository,
+       super(const CameraInitial()) {
     WidgetsBinding.instance.addObserver(this);
-    _setupCamera(_selectedIndex);
+    setupCamera(_selectedIndex);
   }
 
-  final Talker talker;
+  final Talker _talker;
   final PhotoRepositoryI _photoRepository;
-
-  static const countDownSeconds = 3;
-  static const countDownPeriod = 1;
-
-  final Lock _lock = Lock();
-  bool _isBusy = false;
+  final CameraPermissionHandler _permissionHandler = CameraPermissionHandler();
   CameraController? _controller;
   List<CameraDescription> _cameras = [];
   int _selectedIndex = 0;
   bool _hasFlashSupport = true;
-
   bool _isRequestingPermission = false;
-  bool _permissionDialogCausedPause = false;
-
-  CameraController? get controller => _controller;
   bool get _isDisposed => !(_controller?.value.isInitialized ?? false);
+  final Lock _lock = Lock();
 
-  void switchRatio(CameraAspectRatio newAspectRatio) {
-    if (_isBusy || _isDisposed) return;
-    _isBusy = true;
+  Lock get lock => _lock;
+  CameraController? get controller => _controller;
 
-    final currentState = state;
+  @protected
+  bool get isRequestingPermission => _isRequestingPermission;
+  @protected
+  int get selectedIndex => _selectedIndex;
+  @protected
+  set controller(CameraController? value) => _controller = value;
 
-    if (currentState is! CameraReady || isClosed) {
-      _isBusy = false;
-      return;
-    }
+  Future<void> switchRatio(CameraAspectRatio newAspectRatio) async {
+    return await _lock.synchronized(() async {
+      if (_isDisposed) return;
 
-    talker.warning(
-      'CameraCubit switchRatio targetAspectRatio = $newAspectRatio',
-    );
+      final currentState = state;
+      if (currentState is! CameraReady || isClosed || _isDisposed) return;
 
-    _isBusy = false;
-    _safeEmit(currentState.copyWith(targetAspectRatio: newAspectRatio));
+      safeEmit(currentState.copyWith(targetAspectRatio: newAspectRatio));
+    });
   }
 
   Future<void> takeTimedPicture(double targetRatio) async {
-    if (_isBusy || _isDisposed) return;
-    _isBusy = true;
+    return await _lock.synchronized(() async {
+      if (_isDisposed) return;
 
-    int secondsLeft = countDownSeconds;
+      int secondsLeft = countDownSeconds;
 
-    while (secondsLeft > 0) {
-      final currentState = state;
-      if (currentState is! CameraReady || isClosed) {
-        _isBusy = false;
-        return;
+      while (secondsLeft > 0) {
+        final currentState = state;
+        if (currentState is! CameraReady || isClosed || _isDisposed) return;
+
+        safeEmit(
+          currentState.copyWith(secondsLeft: secondsLeft, isTimerActive: true),
+        );
+
+        await Future.delayed(const Duration(seconds: countDownPeriod));
+        secondsLeft -= countDownPeriod;
       }
 
-      _safeEmit(
-        currentState.copyWith(secondsLeft: secondsLeft, isTimerActive: true),
+      final currentState = state;
+      if (currentState is! CameraReady || isClosed || _isDisposed) return;
+
+      safeEmit(
+        currentState.copyWith(secondsLeft: secondsLeft, isTimerActive: false),
       );
 
-      await Future.delayed(const Duration(seconds: countDownPeriod));
-      secondsLeft -= countDownPeriod;
-    }
-
-    final currentState = state;
-    if (currentState is! CameraReady || isClosed || _isDisposed) {
-      _isBusy = false;
-      return;
-    }
-
-    _safeEmit(
-      currentState.copyWith(secondsLeft: secondsLeft, isTimerActive: false),
-    );
-
-    _isBusy = false;
-    await takePicture(targetRatio);
+      await _takePicture(targetRatio);
+    });
   }
 
-  void _safeEmit(CameraState state) {
-    if (!isClosed) emit(state);
-  }
-
-  Future<void> _setupCamera(int index) async {
+  @protected
+  Future<void> setupCamera(int index) async {
     if (isClosed) return;
 
-    CameraState prevState = state;
-
-    _safeEmit(const CameraLoading());
-
     try {
-      _isRequestingPermission = true;
-      final cameraStatus = await Permission.camera.request();
-      if (isClosed) return;
-      _isRequestingPermission = false;
+      CameraState prevState = state;
+      safeEmit(const CameraLoading());
 
-      if (!cameraStatus.isGranted) {
-        _safeEmit(
-          const CameraPermissionDenied(permissionType: PermissionType.camera),
-        );
+      final deniedPermission = await _requestPermissions();
+      if (deniedPermission != null) {
+        safeEmit(CameraPermissionDenied(permissionType: deniedPermission));
         return;
       }
 
-      _isRequestingPermission = true;
-      final audioStatus = await Permission.microphone.request();
-      if (isClosed) return;
-      _isRequestingPermission = false;
-
-      if (!audioStatus.isGranted) {
-        _safeEmit(
-          const CameraPermissionDenied(
-            permissionType: PermissionType.microphone,
-          ),
-        );
-        return;
-      }
-
+      await _loadCamerasIfNeeded();
       if (_cameras.isEmpty) {
-        _cameras = await availableCameras();
-        if (isClosed) return;
-
-        if (_cameras.isEmpty) {
-          _safeEmit(
-            const CameraFailure(errorType: CameraErrorType.noCamerasFound),
-          );
-          return;
-        }
+        safeEmit(
+          const CameraFailure(errorType: CameraErrorType.noCamerasFound),
+        );
+        return;
       }
 
-      final targetIndex = index % _cameras.length;
-      await _controller?.dispose();
-      await Future.delayed(const Duration(milliseconds: 100));
-      _controller = null;
+      final targetIndex = _calculateCameraIndex(index);
+      await disposeController();
       if (isClosed) return;
 
       final newController = CameraController(
         _cameras[targetIndex],
         ResolutionPreset.high,
       );
-      _controller = newController;
-
       await newController.initialize();
-      if (_controller != newController || isClosed || _isDisposed) return;
 
-      _selectedIndex = targetIndex;
       _hasFlashSupport =
           _cameras[targetIndex].lensDirection == CameraLensDirection.back;
 
       if (_hasFlashSupport) {
-        try {
-          await newController.setFlashMode(FlashMode.off);
-          if (_controller != newController || isClosed || _isDisposed) return;
-        } catch (e) {
-          talker.error('Error setting FlashMode: $e');
-        }
-      }
-    } on CameraException catch (e) {
-      talker.error('Camera exception: $e');
-
-      if (e.code == 'AudioAccessDenied') {
-        final audioStatus = await Permission.microphone.status;
-        if (isClosed) return;
-
-        if (!audioStatus.isGranted) {
-          _safeEmit(
-            const CameraPermissionDenied(
-              permissionType: PermissionType.microphone,
-            ),
-          );
-        }
-        return;
+        await newController.setFlashMode(FlashMode.off);
       }
 
-      _safeEmit(
-        const CameraFailure(errorType: CameraErrorType.initializationFailed),
-      );
+      _controller = newController;
+      _selectedIndex = targetIndex;
+
+      _emitReadyState(prevState);
     } catch (e) {
-      talker.error('Error initializing camera: $e');
-
-      _safeEmit(
+      _talker.error('Error initializing camera: $e');
+      safeEmit(
         const CameraFailure(errorType: CameraErrorType.initializationFailed),
       );
-      return;
-    }
-
-    if (prevState is CameraReady) {
-      _safeEmit(
-        CameraReady(
-          hasFlashSupport: _hasFlashSupport,
-          targetAspectRatioPortrait: prevState.targetAspectRatioPortrait,
-        ),
-      );
-    } else if (prevState is CameraReadyPaused) {
-      _safeEmit(
-        CameraReady(
-          hasFlashSupport: _hasFlashSupport,
-          isFlashOn: prevState.isFlashOn,
-          targetAspectRatioPortrait: prevState.targetAspectRatio,
-        ),
-      );
-    } else {
-      _safeEmit(CameraReady(hasFlashSupport: _hasFlashSupport));
     }
   }
 
   Future<void> switchCamera() async {
-    if (_isBusy || _isDisposed) return;
-    _isBusy = true;
+    return await _lock.synchronized(() async {
+      if (_isDisposed) return;
 
-    try {
-      if (_cameras.isEmpty) return;
-
-      final newIndex = (_selectedIndex + 1) % _cameras.length;
-      _hasFlashSupport = true;
-      await _setupCamera(newIndex);
-    } finally {
-      _isBusy = false;
-    }
+      if (_cameras.isNotEmpty) {
+        final newIndex = _calculateNextCameraIndex();
+        await setupCamera(newIndex);
+      }
+    });
   }
 
   Future<void> switchFlash() async {
-    if (_isBusy || _isDisposed) return;
-    _isBusy = true;
+    return await _lock.synchronized(() async {
+      if (_isDisposed) return;
+      if (!_hasFlashSupport) {
+        _emitFlashUnsupported();
+        return;
+      }
+
+      try {
+        final controller = _controller;
+        if (controller == null || !controller.value.isInitialized) return;
+
+        final currentMode = controller.value.flashMode;
+        final newMode = currentMode == FlashMode.always
+            ? FlashMode.off
+            : FlashMode.always;
+        final newIsFlashOn = newMode == FlashMode.always;
+        await controller.setFlashMode(newMode);
+
+        if (controller == _controller && !isClosed && !_isDisposed) {
+          final currentState = state;
+          if (currentState is CameraReady) {
+            safeEmit(
+              CameraReady(
+                targetAspectRatio: currentState.targetAspectRatio,
+                isFlashOn: newIsFlashOn,
+                hasFlashSupport: true,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        _talker.error('Error switching flash: $e');
+
+        if (e.toString().contains('disposed') || e is StateError) {
+          _talker.warning(
+            'Error switching flash: Ignored error on disposed controller',
+          );
+          return;
+        }
+
+        _emitFlashUnsupported();
+      }
+    });
+  }
+
+  Future<void> takePicture(double targetRatio) async {
+    return await _lock.synchronized(() async {
+      await _takePicture(targetRatio);
+    });
+  }
+
+  Future<void> _takePicture(double targetRatio) async {
+    if (_isDisposed || state is! CameraReady) return;
 
     try {
       final controller = _controller;
       if (controller == null ||
           !controller.value.isInitialized ||
-          _isDisposed) {
+          controller.value.isTakingPicture) {
         return;
       }
 
-      if (!_hasFlashSupport) {
-        final currentState = state;
-        if (currentState is CameraReady) {
-          _safeEmit(
-            CameraReady(
-              targetAspectRatioPortrait: currentState.targetAspectRatioPortrait,
-              isFlashOn: false,
-              hasFlashSupport: false,
-              message: 'No flash available on this camera',
-            ),
-          );
-        }
-
+      final picture = await controller.takePicture();
+      if (controller != _controller || isClosed) {
+        _talker.warning('Picture ignored: controller changed or cubit closed');
         return;
       }
 
-      if (!controller.value.isInitialized || _isDisposed) {
-        return;
-      }
-
-      final currentMode = controller.value.flashMode;
-      final newMode = currentMode == FlashMode.always
-          ? FlashMode.off
-          : FlashMode.always;
-      final newIsFlashOn = newMode == FlashMode.always;
-
-      await controller.setFlashMode(newMode);
-
-      if (controller != _controller || isClosed || _isDisposed) {
-        talker.warning(
-          'Flash switch ignored: controller changed or cubit closed',
-        );
-        return;
-      }
-
-      final actualMode = controller.value.flashMode;
-      if (actualMode != newMode) {
-        talker.warning('Flash not applied: likely no support');
-
-        _hasFlashSupport = false;
-
-        final currentState = state;
-        if (currentState is CameraReady) {
-          _safeEmit(
-            CameraReady(
-              targetAspectRatioPortrait: currentState.targetAspectRatioPortrait,
-              isFlashOn: false,
-              hasFlashSupport: false,
-              message: 'No flash available on this camera',
-            ),
-          );
-        }
-
-        return;
-      }
-
-      final currentState = state;
-      if (currentState is CameraReady) {
-        _safeEmit(
-          CameraReady(
-            targetAspectRatioPortrait: currentState.targetAspectRatioPortrait,
-            isFlashOn: newIsFlashOn,
-            hasFlashSupport: _hasFlashSupport,
-          ),
-        );
-      }
-    } on CameraException catch (e) {
-      talker.error('CameraException switching flash: $e');
-
-      if (controller != _controller || isClosed || _isDisposed) return;
-
-      _hasFlashSupport = false;
-
-      final currentState = state;
-      if (currentState is CameraReady) {
-        _safeEmit(
-          CameraReady(
-            targetAspectRatioPortrait: currentState.targetAspectRatioPortrait,
-            isFlashOn: false,
-            hasFlashSupport: false,
-            message: 'No flash available on this camera',
-          ),
-        );
-      }
-    } catch (e) {
-      talker.error('Error switching flash: $e');
-
-      if (e.toString().contains('disposed') || e is StateError) {
-        talker.warning(
-          'Error switching flash: Ignored error on disposed controller',
+      final bytes = await picture.readAsBytes();
+      if (controller != _controller || isClosed) {
+        _talker.warning(
+          'Picture readAsBytes ignored: controller changed or cubit closed',
         );
         return;
       }
 
       final currentState = state;
       if (currentState is CameraReady) {
-        _safeEmit(
-          CameraReady(
-            targetAspectRatioPortrait: currentState.targetAspectRatioPortrait,
-            isFlashOn: false,
-            hasFlashSupport: false,
-            message: 'Something went wrong',
-          ),
-        );
-      }
-    } finally {
-      _isBusy = false;
-    }
-  }
+        final dataState = await _photoRepository.savePhoto(bytes, targetRatio);
 
-  Future<void> takePicture(double targetRatio) async {
-    if (_isBusy || _isDisposed || state is! CameraReady) return;
-    _isBusy = true;
-
-    try {
-      return await _lock.synchronized(() async {
-        final controller = _controller;
-        if (controller == null ||
-            !controller.value.isInitialized ||
-            controller.value.isTakingPicture ||
-            _isDisposed) {
-          _isBusy = false;
-          return;
-        }
-
-        final picture = await controller.takePicture();
-        if (controller != _controller || isClosed || _isDisposed) {
-          talker.warning('Picture ignored: controller changed or cubit closed');
-          _isBusy = false;
-          return;
-        }
-        final bytes = await picture.readAsBytes();
-        if (controller != _controller || isClosed || _isDisposed) {
-          talker.warning(
-            'Picture readAsBytes ignored: controller changed or cubit closed',
-          );
-          _isBusy = false;
-          return;
-        }
-
-        final currentState = state;
-        if (currentState is CameraReady) {
-          final dataState = await _photoRepository.savePhoto(
-            bytes,
-            targetRatio,
-          );
-
-          switch (dataState) {
-            case (DataSuccess _):
-              {
-                final file = dataState.data!;
-                _isBusy = false;
-                _safeEmit(CameraPictureTaken(pictureFile: file));
-              }
-            case (DataFailed _):
-              {
-                _safeEmit(const CameraPictureFailure());
-
-                await _setupCamera(_selectedIndex);
-                _isBusy = false;
-              }
-          }
+        if (dataState is DataSuccess) {
+          safeEmit(CameraPictureTaken(pictureFile: dataState.data!));
         } else {
-          _isBusy = false;
-          return;
+          safeEmit(const CameraPictureFailure());
+          await setupCamera(_selectedIndex);
         }
-      });
-    } catch (e) {
-      if (e is CameraException && e.description?.contains('disposed') == true) {
-        talker.warning('CameraException: Controller disposed');
-      } else {
-        talker.error('Failed to capture photo: $e');
       }
-
-      _safeEmit(const CameraPictureFailure());
-
-      await _setupCamera(_selectedIndex);
-      _isBusy = false;
+    } catch (e) {
+      safeEmit(const CameraPictureFailure());
+      await setupCamera(_selectedIndex);
     }
   }
 
-  Future<void> retryInitialization() async {
-    _isBusy = true;
-    await _setupCamera(_selectedIndex);
-    _isBusy = false;
+  int _calculateCameraIndex(int index) {
+    return index % _cameras.length;
   }
 
-  Future<void> grantPermissionInSettings() async {
-    await openAppSettings();
+  int _calculateNextCameraIndex() {
+    return (_selectedIndex + 1) % _cameras.length;
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused) {
-      _handlePause();
-    } else if (state == AppLifecycleState.resumed) {
-      _handleResume();
+  Future<void> _loadCamerasIfNeeded() async {
+    if (_cameras.isEmpty) {
+      _cameras = await availableCameras();
     }
   }
 
-  Future<void> _handlePause() async {
-    if (_isRequestingPermission) {
-      _permissionDialogCausedPause = true;
-    }
-
-    final currentState = state;
-
-    if (currentState is CameraReady) {
-      _safeEmit(
-        CameraReadyPaused(
-          hasFlashSupport: currentState.hasFlashSupport,
-          isFlashOn: currentState.isFlashOn,
-          targetAspectRatio: currentState.targetAspectRatioPortrait,
+  void _emitReadyState(CameraState prevState) {
+    if (prevState is CameraReady) {
+      safeEmit(
+        CameraReady(
+          hasFlashSupport: _hasFlashSupport,
+          targetAspectRatio: prevState.targetAspectRatio,
+        ),
+      );
+    } else if (prevState is CameraReadyPaused) {
+      safeEmit(
+        CameraReady(
+          hasFlashSupport: _hasFlashSupport,
+          isFlashOn: prevState.isFlashOn,
+          targetAspectRatio: prevState.targetAspectRatio,
         ),
       );
     } else {
-      _safeEmit(const CameraPaused());
+      safeEmit(CameraReady(hasFlashSupport: _hasFlashSupport));
     }
+  }
 
-    await _lock.synchronized(() async {
-      final controller = _controller;
-      if (_controller == controller) {
-        _controller = null;
-      }
-      if (controller == null) return;
+  void _emitFlashUnsupported() {
+    final currentState = state;
+    if (currentState is CameraReady) {
+      safeEmit(
+        CameraReady(
+          targetAspectRatio: currentState.targetAspectRatio,
+          isFlashOn: false,
+          hasFlashSupport: false,
+          message: 'No flash available on this camera',
+        ),
+      );
+    }
+  }
 
-      await controller.dispose();
-      await Future.delayed(const Duration(milliseconds: 100));
+  Future<PermissionType?> _requestPermissions() async {
+    _isRequestingPermission = true;
+    final denied = await _permissionHandler.requestPermissions();
+    _isRequestingPermission = false;
+    return denied;
+  }
+
+  Future<void> retryInitialization() async {
+    return await _lock.synchronized(() async {
+      await setupCamera(_selectedIndex);
     });
   }
 
-  Future<void> _handleResume() async {
-    if (_permissionDialogCausedPause) {
-      _permissionDialogCausedPause = false;
-      return;
-    }
+  Future<void> grantPermissionInSettings() async {
+    await _permissionHandler.openSettings();
+  }
 
-    _isBusy = true;
-    await _setupCamera(_selectedIndex);
-    _isBusy = false;
+  @protected
+  void safeEmit(CameraState state) {
+    if (!isClosed) emit(state);
+  }
+
+  @protected
+  Future<void> disposeController() async {
+    final oldController = _controller;
+    if (oldController != null) {
+      await oldController.dispose();
+      if (_controller == oldController) _controller = null;
+      await Future.delayed(controllerDisposeDelay);
+    }
   }
 
   @override
   Future<void> close() async {
     WidgetsBinding.instance.removeObserver(this);
 
-    final controller = _controller;
-
-    return await _lock.synchronized(() async {
-      _safeEmit(const CameraClosed());
-
-      await controller?.dispose();
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      if (_controller == controller) {
-        _controller = null;
-      }
-      await super.close();
-    });
+    safeEmit(const CameraClosed());
+    disposeController();
+    await super.close();
   }
 }

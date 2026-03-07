@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../../../../../../../../shared/presentation/providers/responsive_size/index.dart'
-    show ResponsiveSizeCubit;
+import 'camera_icon_button.dart';
 
 class SwitchCameraButton extends StatelessWidget {
   const SwitchCameraButton({super.key, required this.switchCamera});
@@ -11,12 +9,9 @@ class SwitchCameraButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = context.watch<ResponsiveSizeCubit>();
-    final iconSize = responsive.iconM;
-
-    return IconButton(
+    return CameraIconButton(
+      icon: Icons.cameraswitch_rounded,
       onPressed: switchCamera,
-      icon: Icon(Icons.cameraswitch_rounded, size: iconSize),
     );
   }
 }
