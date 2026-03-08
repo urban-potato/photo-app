@@ -46,7 +46,6 @@ dependencies:
   talker_bloc_logger: ^5.1.14
   synchronized: ^3.4.0
   get_it: ^9.2.1
-  camera_android: ^0.10.10+15
   image: ^4.8.0
 
 dev_dependencies:

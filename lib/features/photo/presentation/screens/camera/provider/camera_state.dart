@@ -35,6 +35,7 @@ class CameraReady extends CameraState {
   final int? secondsLeft;
   final String? message;
   final CameraAspectRatio targetAspectRatio;
+  final bool isBusy;
 
   const CameraReady({
     this.isFlashOn = false,
@@ -43,6 +44,7 @@ class CameraReady extends CameraState {
     this.secondsLeft,
     this.message,
     this.targetAspectRatio = CameraAspectRatio.small,
+    required this.isBusy,
   });
 
   @override
@@ -53,6 +55,7 @@ class CameraReady extends CameraState {
     secondsLeft,
     message,
     targetAspectRatio,
+    isBusy,
   ];
 
   CameraReady copyWith({
@@ -62,6 +65,7 @@ class CameraReady extends CameraState {
     int? secondsLeft,
     String? message,
     CameraAspectRatio? targetAspectRatio,
+    required bool isBusy,
   }) {
     return CameraReady(
       isFlashOn: isFlashOn ?? this.isFlashOn,
@@ -70,6 +74,7 @@ class CameraReady extends CameraState {
       secondsLeft: secondsLeft ?? this.secondsLeft,
       message: message,
       targetAspectRatio: targetAspectRatio ?? this.targetAspectRatio,
+      isBusy: isBusy,
     );
   }
 }
@@ -93,7 +98,9 @@ class CameraPictureTaken extends CameraState {
 }
 
 class CameraPictureFailure extends CameraState {
-  const CameraPictureFailure();
+  final String? message;
+
+  const CameraPictureFailure({this.message});
 }
 
 class CameraReadyPaused extends CameraState {

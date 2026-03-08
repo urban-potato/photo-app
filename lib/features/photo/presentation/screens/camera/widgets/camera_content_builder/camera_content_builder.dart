@@ -85,6 +85,7 @@ class CameraContentBuilder extends StatelessWidget {
             takeTimedPicture: null,
             takePicture: null,
             switchRatio: null,
+            isBusy: true,
           );
 
           final CameraPreviewProps cameraPreviewProps = (
@@ -127,6 +128,7 @@ class CameraContentBuilder extends StatelessWidget {
               final newAspectRatio = getNewTargetAspectRatio(targetAspectRatio);
               await cameraCubit.switchRatio(newAspectRatio);
             },
+            isBusy: state.isBusy,
           );
 
           final CameraPreviewProps cameraPreviewProps = (

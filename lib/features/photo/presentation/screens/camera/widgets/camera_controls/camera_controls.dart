@@ -11,6 +11,7 @@ typedef CameraControlsProps = ({
   void Function()? switchRatio,
   Future<void> Function()? takeTimedPicture,
   Future<void> Function()? takePicture,
+  bool isBusy,
 });
 
 class CameraControls extends StatelessWidget {
@@ -29,6 +30,7 @@ class CameraControls extends StatelessWidget {
       :takeTimedPicture,
       :takePicture,
       :switchRatio,
+      :isBusy,
     ) = cameraControlsProps;
 
     return Row(
@@ -40,9 +42,9 @@ class CameraControls extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SwitchCameraButton(switchCamera: switchCamera),
+                SwitchCameraButton(switchCamera: isBusy ? null : switchCamera),
                 TakeTimedPictureButton(
-                  takeTimedPicture: takeTimedPicture,
+                  takeTimedPicture: isBusy ? null : takeTimedPicture,
                   isTimerActive: isTimerActive,
                 ),
               ],
@@ -50,7 +52,7 @@ class CameraControls extends StatelessWidget {
           ),
         ),
 
-        TakePictureButton(takePicture: takePicture),
+        TakePictureButton(takePicture: isBusy ? null : takePicture),
 
         Expanded(
           child: Align(
@@ -59,11 +61,11 @@ class CameraControls extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SwitchFlashButton(
-                  switchFlash: switchFlash,
+                  switchFlash: isBusy ? null : switchFlash,
                   hasFlashSupport: hasFlashSupport,
                   isFlashOn: isFlashOn,
                 ),
-                SwitchRatioButton(switchRatio: switchRatio),
+                SwitchRatioButton(switchRatio: isBusy ? null : switchRatio),
               ],
             ),
           ),
