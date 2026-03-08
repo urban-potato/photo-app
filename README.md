@@ -1,16 +1,24 @@
-# photo_app
+# Photo App
 
-A new Flutter project.
+## Overview
 
-## Getting Started
+This application allows users to take photos, view them in the app’s gallery, and delete them when needed. All photos are stored in the app’s private storage, which is not accessible to other applications.
 
-This project is a starting point for a Flutter application.
+Camera features include:
 
-A few resources to get you started if this is your first Flutter project:
+- Capturing photos using both the front and rear cameras
+- Flash support
+- Timer for delayed shots
+- Adjustable photo aspect ratio
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+The application also supports multiple appearance themes:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- System default
+- Light theme
+- Dark theme
+
+## UI Preview
+
+![dark theme](https://github.com/urban-potato/photo-app/blob/main/readme_assets/preview_dark.png?raw=true)
+
+![light theme](https://github.com/urban-potato/photo-app/blob/main/readme_assets/preview_light.png?raw=true)
