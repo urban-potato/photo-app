@@ -66,28 +66,32 @@ class CameraPreviewPositioned extends StatelessWidget {
 
       return Align(
         alignment: Alignment.center,
-        child: SizedBox(
-          width: targetSize.width,
-          height: targetSize.height,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ClipRect(
-                child: Transform.scale(
-                  scale: scale,
-                  child: Center(
-                    child: AspectRatio(
-                      aspectRatio: previewAspect,
-                      child: CameraPreview(controller),
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          child: SizedBox(
+            width: targetSize.width,
+            height: targetSize.height,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRect(
+                  child: Transform.scale(
+                    scale: scale,
+                    child: Center(
+                      child: AspectRatio(
+                        aspectRatio: previewAspect,
+                        child: CameraPreview(controller),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Align(
-                alignment: Alignment.center,
-                child: CountdownDisplay(countDownProps),
-              ),
-            ],
+                Align(
+                  alignment: Alignment.center,
+                  child: CountdownDisplay(countDownProps),
+                ),
+              ],
+            ),
           ),
         ),
       );
