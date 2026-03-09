@@ -1,4 +1,4 @@
-import 'dart:async' show Completer;
+import 'dart:async' show Completer, TimeoutException;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
@@ -44,10 +44,13 @@ class CameraCubit extends Cubit<CameraState>
   int _cameraGeneration = 0;
   Completer<void>? _captureCompleter;
 
-  Lock get lock => _lock;
   CameraController? get controller => _controller;
   @override
   Completer<void>? get captureCompleter => _captureCompleter;
+
+  @override
+  @protected
+  Talker get talker => _talker;
 
   @override
   @protected
@@ -59,6 +62,11 @@ class CameraCubit extends Cubit<CameraState>
   set controller(CameraController? value) => _controller = value;
 
   Future<void> switchRatio(CameraAspectRatio newAspectRatio) async {
+    if (_lock.locked) {
+      _talker.warning('switchRatio skipped: lock busy');
+      return;
+    }
+
     return await _lock.synchronized(() async {
       if (_controllerUnavailable) return;
 
@@ -76,6 +84,11 @@ class CameraCubit extends Cubit<CameraState>
   }
 
   Future<void> takeTimedPicture(double targetRatio) async {
+    if (_lock.locked) {
+      _talker.warning('takeTimedPicture skipped: lock busy');
+      return;
+    }
+
     return await _lock.synchronized(() async {
       if (_controllerUnavailable) return;
 
@@ -198,6 +211,11 @@ class CameraCubit extends Cubit<CameraState>
   }
 
   Future<void> switchCamera() async {
+    if (_lock.locked) {
+      _talker.warning('switchCamera skipped: lock busy');
+      return;
+    }
+
     return await _lock.synchronized(() async {
       if (_controllerUnavailable) return;
 
@@ -209,6 +227,11 @@ class CameraCubit extends Cubit<CameraState>
   }
 
   Future<void> switchFlash() async {
+    if (_lock.locked) {
+      _talker.warning('switchFlash skipped: lock busy');
+      return;
+    }
+
     return await _lock.synchronized(() async {
       if (_controllerUnavailable) return;
       if (!_hasFlashSupport) {
@@ -272,6 +295,11 @@ class CameraCubit extends Cubit<CameraState>
   }
 
   Future<void> takePicture(double targetRatio) async {
+    if (_lock.locked) {
+      _talker.warning('takePicture skipped: lock busy');
+      return;
+    }
+
     return await _lock.synchronized(() async {
       if (state is CameraReady) {
         safeEmit((state as CameraReady).copyWith(isBusy: true));
@@ -298,7 +326,12 @@ class CameraCubit extends Cubit<CameraState>
       _captureCompleter = Completer<void>();
       _isCapturing = true;
 
-      final picture = await controller.takePicture();
+      final picture = await controller.takePicture().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw TimeoutException('Take picture timed out');
+        },
+      );
       if (_controllerInvalid(controller)) {
         _talker.warning('Picture ignored: controller changed or cubit closed');
         return;
@@ -314,6 +347,7 @@ class CameraCubit extends Cubit<CameraState>
 
       final currentState = state;
       if (currentState is! CameraReady) return;
+
       final dataState = await _photoRepository.savePhoto(bytes, targetRatio);
 
       if (_isControllerNull || _controllerInvalid(controller)) {
@@ -337,8 +371,8 @@ class CameraCubit extends Cubit<CameraState>
 
       // await setupCamera(_selectedIndex);
     } finally {
-      _isCapturing = false;
       _captureCompleter?.complete();
+      _isCapturing = false;
       _captureCompleter = null;
     }
   }
@@ -411,6 +445,11 @@ class CameraCubit extends Cubit<CameraState>
   }
 
   Future<void> retryInitialization() async {
+    if (_lock.locked) {
+      _talker.warning('retryInitialization skipped: lock busy');
+      return;
+    }
+
     return await _lock.synchronized(() async {
       await setupCamera(_selectedIndex);
     });
@@ -449,7 +488,7 @@ class CameraCubit extends Cubit<CameraState>
   @override
   Future<void> close() async {
     if (isCapturing && _captureCompleter != null) {
-      await _captureCompleter!.future;
+      await _captureCompleter?.future;
     }
 
     WidgetsBinding.instance.removeObserver(this);

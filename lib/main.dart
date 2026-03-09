@@ -1,3 +1,5 @@
+import 'dart:async' show runZonedGuarded;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show SystemUiMode, SystemChrome, SystemUiOverlay;
@@ -13,36 +15,45 @@ import 'app/factories/di_container.dart' show initializeDependencies;
 import 'app/navigation/index.dart' show AppRouter;
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.manual,
-    overlays: SystemUiOverlay.values,
-  );
-
-  final router = AppRouter();
   final talker = TalkerFlutter.init();
-  final appConfig = AppConfig(talker: talker, router: router);
 
-  talker.verbose('App started');
+  runZonedGuarded(
+    () {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  Bloc.observer = TalkerBlocObserver(
-    talker: talker,
-    settings: const TalkerBlocLoggerSettings(
-      printChanges: true,
-      printEventFullData: false,
-      printStateFullData: false,
-      printCreations: true,
-      printClosings: true,
-    ),
-  );
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: SystemUiOverlay.values,
+      );
 
-  initializeDependencies(config: appConfig);
+      final router = AppRouter();
+      // final talker = TalkerFlutter.init();
+      final appConfig = AppConfig(talker: talker, router: router);
 
-  runApp(
-    AppInitializer(
-      config: appConfig,
-      child: App(config: appConfig),
-    ),
+      talker.verbose('App started');
+
+      Bloc.observer = TalkerBlocObserver(
+        talker: talker,
+        settings: const TalkerBlocLoggerSettings(
+          printChanges: true,
+          printEventFullData: false,
+          printStateFullData: false,
+          printCreations: true,
+          printClosings: true,
+        ),
+      );
+
+      initializeDependencies(config: appConfig);
+
+      runApp(
+        AppInitializer(
+          config: appConfig,
+          child: App(config: appConfig),
+        ),
+      );
+    },
+    (error, stack) {
+      talker.error('Uncaught Error: $error, $stack');
+    },
   );
 }
