@@ -1,12 +1,12 @@
 import 'dart:io' show File;
 
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../../../../app/router/router.dart' show PictureRoute;
 import '../../../../../../../../shared/presentation/providers/responsive_size/index.dart'
     show ResponsiveSizeCubit;
+import '../../../../../../../shared/presentation/providers/index.dart'
+    show NavigationProviderI, PictureAppRoute;
 import 'utils/grid_config_helper.dart';
 
 class PhotosList extends StatelessWidget {
@@ -47,9 +47,13 @@ class PhotosList extends StatelessWidget {
                 fit: BoxFit.cover,
                 child: InkWell(
                   onTap: () {
-                    context.router.push(
-                      PictureRoute(picturePath: imageFile.path),
-                    );
+                    if (context.mounted) {
+                      final router = context.read<NavigationProviderI>();
+                      router.push(
+                        context,
+                        PictureAppRoute(picturePath: imageFile.path),
+                      );
+                    }
                   },
                 ),
               ),

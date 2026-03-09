@@ -1,7 +1,8 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../../../app/router/router.dart' show SettingsRoute;
+import '../../../../../../../shared/presentation/providers/index.dart'
+    show NavigationProviderI, SettingsAppRoute;
 
 class GalleryAppBar extends StatelessWidget {
   const GalleryAppBar({super.key});
@@ -15,8 +16,8 @@ class GalleryAppBar extends StatelessWidget {
         IconButton(
           onPressed: () {
             if (context.mounted) {
-              final router = context.router;
-              router.push(const SettingsRoute());
+              final router = context.read<NavigationProviderI>();
+              router.push(context, const SettingsAppRoute());
             }
           },
           icon: const Icon(Icons.settings),

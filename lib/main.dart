@@ -8,8 +8,9 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import 'app/app.dart';
 import 'app/app_config.dart';
+import 'app/app_initializer.dart';
 import 'app/factories/di_container.dart' show initializeDependencies;
-import 'app/router/router.dart' show AppRouter;
+import 'app/navigation/index.dart' show AppRouter;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,5 +39,10 @@ void main() {
 
   initializeDependencies(config: appConfig);
 
-  runApp(App(config: appConfig));
+  runApp(
+    AppInitializer(
+      config: appConfig,
+      child: App(config: appConfig),
+    ),
+  );
 }

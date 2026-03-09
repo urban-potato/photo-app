@@ -1,10 +1,11 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../../shared/presentation/providers/index.dart'
+    show NavigationProviderI;
 import '../../../../../../../shared/presentation/widgets/index.dart'
     show MessageWithButtonView;
-import '../../../../provider/index.dart';
+import '../../../../provider/index.dart' show PhotoCubit;
 import '../../provider/index.dart';
 import '../camera_controls/camera_controls.dart' show CameraControlsProps;
 import '../camera_paused_view/camera_paused_view.dart';
@@ -33,11 +34,15 @@ class CameraContentBuilder extends StatelessWidget {
     }
 
     if (state is CameraPictureTaken && context.mounted) {
-      final photoCubit = context.read<PhotoCubit>();
-      final router = context.router;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (context.mounted) {
+          final photoCubit = context.read<PhotoCubit>();
+          final router = context.read<NavigationProviderI>();
 
-      router.popUntil((route) => route.isFirst);
-      photoCubit.loadPhotoPaths();
+          photoCubit.loadPhotoPaths();
+          router.popToFirst(context);
+        }
+      });
     }
 
     if (state is CameraPictureFailure && context.mounted) {
@@ -146,10 +151,9 @@ class CameraContentBuilder extends StatelessWidget {
       );
     } else if (state is CameraPictureTaken) {
       final picture = state.pictureFile;
-
       return Center(child: Image.file(picture));
     } else if (state is CameraPictureFailure) {
-      return const Center(child: Text('Woops, something went wrong'));
+      return MessageWithButtonView(onPressed: cameraCubit.retryInitialization);
     }
 
     return MessageWithButtonView(onPressed: cameraCubit.retryInitialization);

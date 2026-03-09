@@ -1,5 +1,7 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../providers/navigation/index.dart' show NavigationProviderI;
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key, this.title, this.actions});
@@ -15,8 +17,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         icon: const Icon(Icons.arrow_back_ios_new_rounded),
         onPressed: () {
           if (context.mounted) {
-            final router = context.router;
-            router.maybePop();
+            final router = context.read<NavigationProviderI>();
+            router.maybePop(context);
           }
         },
       ),

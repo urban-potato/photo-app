@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'
-    show BlocProvider, RepositoryProvider, MultiBlocProvider;
+    show
+        BlocProvider,
+        RepositoryProvider,
+        MultiBlocProvider,
+        MultiRepositoryProvider;
 import 'package:talker_flutter/talker_flutter.dart' show Talker;
 
+import '../shared/presentation/providers/index.dart' show NavigationProviderI;
 import '../shared/presentation/providers/settings/index.dart'
     show SettingsCubit;
 import 'app_config.dart';
@@ -18,8 +23,13 @@ class AppInitializer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider<Talker>(
-      create: (context) => config.talker,
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<Talker>(create: (context) => di<Talker>()),
+        RepositoryProvider<NavigationProviderI>(
+          create: (context) => di<NavigationProviderI>(),
+        ),
+      ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider<ResponsiveSizeCubit>(

@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart'
     show SharedPreferencesAsync;
+import 'package:talker_flutter/talker_flutter.dart' show Talker;
 
 import '../../features/photo/data/data_sources/photo.dart';
 import '../../features/photo/data/repositpries/photo.dart';
@@ -10,24 +11,31 @@ import '../../features/photo/presentation/screens/camera/provider/index.dart'
     show CameraCubit;
 import '../../shared/data/repositories/index.dart' show SettingsRepository;
 import '../../shared/domain/repositories/index.dart' show SettingsRepositoryI;
+import '../../shared/presentation/providers/index.dart'
+    show NavigationProviderI;
 import '../../shared/presentation/providers/settings/index.dart';
 import '../app_config.dart';
 import '../../shared/presentation/providers/responsive_size/index.dart'
     show ResponsiveSizeCubit;
+import '../navigation/index.dart' show NavigationProvider;
 
 final di = GetIt.instance;
 
 void initializeDependencies({required AppConfig config}) {
+  di.registerSingleton<Talker>(config.talker);
+
+  di.registerSingleton<NavigationProviderI>(const NavigationProvider());
+
   final sharedPreferencesAsync = SharedPreferencesAsync();
   di.registerSingleton<SharedPreferencesAsync>(sharedPreferencesAsync);
 
-  di.registerSingleton<PhotoDataSource>(PhotoDataSource(talker: config.talker));
+  di.registerSingleton<PhotoDataSource>(PhotoDataSource(talker: di<Talker>()));
 
   di.registerSingleton<PhotoRepositoryI>(
     PhotoRepository(
       photoDataSource: di<PhotoDataSource>(),
       preferencesAsync: di<SharedPreferencesAsync>(),
-      talker: config.talker,
+      talker: di<Talker>(),
     ),
   );
 
@@ -37,7 +45,7 @@ void initializeDependencies({required AppConfig config}) {
   di.registerFactory<CameraCubit>(
     () => CameraCubit(
       photoRepository: di<PhotoRepositoryI>(),
-      talker: config.talker,
+      talker: di<Talker>(),
     ),
   );
 
@@ -46,14 +54,14 @@ void initializeDependencies({required AppConfig config}) {
   di.registerSingleton<SettingsRepositoryI>(
     SettingsRepository(
       prefs: di<SharedPreferencesAsync>(),
-      talker: config.talker,
+      talker: di<Talker>(),
     ),
   );
 
   di.registerSingleton<SettingsCubit>(
     SettingsCubit(
       settingsRepo: di<SettingsRepositoryI>(),
-      talker: config.talker,
+      talker: di<Talker>(),
     ),
   );
 }

@@ -27,7 +27,7 @@ class CameraRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [GalleryScreen]
+/// [GalleryScreenWrapper]
 class GalleryRoute extends PageRouteInfo<void> {
   const GalleryRoute({List<PageRouteInfo>? children})
     : super(GalleryRoute.name, initialChildren: children);
@@ -37,7 +37,23 @@ class GalleryRoute extends PageRouteInfo<void> {
   static PageInfo page = PageInfo(
     name,
     builder: (data) {
-      return const GalleryScreen();
+      return const GalleryScreenWrapper();
+    },
+  );
+}
+
+/// generated route for
+/// [HomeScreenWrapper]
+class HomeRouteWrapper extends PageRouteInfo<void> {
+  const HomeRouteWrapper({List<PageRouteInfo>? children})
+    : super(HomeRouteWrapper.name, initialChildren: children);
+
+  static const String name = 'HomeRouteWrapper';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const HomeScreenWrapper();
     },
   );
 }
@@ -59,7 +75,7 @@ class PhotoFeatureRouteWrapper extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [PictureScreen]
+/// [PictureScreenWrapper]
 class PictureRoute extends PageRouteInfo<PictureRouteArgs> {
   PictureRoute({
     Key? key,
@@ -77,7 +93,7 @@ class PictureRoute extends PageRouteInfo<PictureRouteArgs> {
     name,
     builder: (data) {
       final args = data.argsAs<PictureRouteArgs>();
-      return PictureScreen(key: args.key, picturePath: args.picturePath);
+      return PictureScreenWrapper(key: args.key, picturePath: args.picturePath);
     },
   );
 }
@@ -106,7 +122,7 @@ class PictureRouteArgs {
 }
 
 /// generated route for
-/// [SettingsScreen]
+/// [SettingsScreenWrapper]
 class SettingsRoute extends PageRouteInfo<void> {
   const SettingsRoute({List<PageRouteInfo>? children})
     : super(SettingsRoute.name, initialChildren: children);
@@ -116,7 +132,7 @@ class SettingsRoute extends PageRouteInfo<void> {
   static PageInfo page = PageInfo(
     name,
     builder: (data) {
-      return const SettingsScreen();
+      return const SettingsScreenWrapper();
     },
   );
 }

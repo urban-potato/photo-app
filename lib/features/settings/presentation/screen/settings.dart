@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart' show RoutePage;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,7 +6,6 @@ import '../../../../shared/presentation/providers/responsive_size/index.dart'
 import '../../../../shared/presentation/widgets/index.dart' show CustomAppBar;
 import '../widgets/index.dart';
 
-@RoutePage()
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
