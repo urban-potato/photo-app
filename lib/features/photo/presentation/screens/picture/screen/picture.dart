@@ -2,24 +2,21 @@ import 'dart:io' show File;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:photo_view/photo_view.dart';
 
 import '../../../../../../shared/presentation/providers/index.dart'
     show NavigationProviderI;
 import '../../../../../../shared/presentation/widgets/index.dart'
     show CustomAppBar;
-import '../../../provider/index.dart'
-    show
-        PhotoCubit,
-        PhotoDeleteSuccess,
-        PhotoState,
-        PhotoFailure,
-        PhotoErrorTypeMessage;
+import '../../../models/index.dart' show PhotoItemModelUI;
+import '../../../provider/index.dart';
+import '../widgets/index.dart';
 
 class PictureScreen extends StatefulWidget {
-  const PictureScreen({super.key, required this.picturePath});
+  const PictureScreen({super.key, required this.initialPhoto});
 
-  final String picturePath;
+  final PhotoItemModelUI initialPhoto;
 
   @override
   State<PictureScreen> createState() => _PictureScreenState();
@@ -32,7 +29,13 @@ class _PictureScreenState extends State<PictureScreen> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+
+    final photos = context.read<PhotoCubit>().state.photos?.photosList ?? [];
+
+    _currentIndex = photos.indexOf(widget.initialPhoto);
+    if (_currentIndex == -1) _currentIndex = 0;
+
+    _pageController = PageController(initialPage: _currentIndex);
   }
 
   @override
@@ -41,22 +44,39 @@ class _PictureScreenState extends State<PictureScreen> {
     super.dispose();
   }
 
+  ({String date, String time}) _getFormattedDateAndTime(DateTime dateTime) {
+    final date = DateFormat('MMMM d, y').format(dateTime);
+    final time = DateFormat.Hm().format(dateTime);
+
+    return (date: date, time: time);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final photoCubit = context.read<PhotoCubit>();
+    final photos = photoCubit.state.photos?.photosList ?? [];
+
+    final title = 'Picture';
+    Widget? titleWidget;
+    void Function()? onPressed;
+
+    if (photos.isNotEmpty) {
+      final photo = photos[_currentIndex];
+      final (:date, :time) = _getFormattedDateAndTime(photo.dateTime);
+
+      titleWidget = TitleWidget(date: date, time: time);
+      onPressed = () async {
+        await photoCubit.deletePhoto(photos[_currentIndex].path);
+      };
+    }
+
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Picture',
+        title: title,
+        titleWidget: titleWidget,
         actions: [
           IconButton(
-            onPressed: () async {
-              if (context.mounted) {
-                final photoCubit = context.read<PhotoCubit>();
-                final paths = photoCubit.state.photoPathsList ?? [];
-                if (paths.isNotEmpty) {
-                  await photoCubit.deletePhoto(paths[_currentIndex]);
-                }
-              }
-            },
+            onPressed: onPressed,
             icon: const Icon(Icons.delete_rounded),
           ),
         ],
@@ -65,25 +85,36 @@ class _PictureScreenState extends State<PictureScreen> {
       body: SafeArea(
         child: BlocConsumer<PhotoCubit, PhotoState>(
           listener: (context, state) {
-            if (state is PhotoDeleteSuccess && context.mounted) {
+            if (state is PhotoLoaded) {
               WidgetsBinding.instance.addPostFrameCallback((_) async {
                 if (context.mounted) {
-                  final photoCubit = context.read<PhotoCubit>();
-                  await photoCubit.loadPhotoPaths();
-
-                  final paths = photoCubit.state.photoPathsList ?? [];
-                  if (paths.isEmpty) {
-                    if (context.mounted) {
-                      final router = context.read<NavigationProviderI>();
-                      router.popToFirst(context);
-                    }
+                  final photos = state.photos?.photosList ?? [];
+                  if (photos.isEmpty) {
+                    final router = context.read<NavigationProviderI>();
+                    router.popToFirst(context);
                   } else {
-                    _currentIndex = _currentIndex.clamp(0, paths.length - 1);
-                    _pageController.animateToPage(
-                      _currentIndex,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
+                    _currentIndex = _currentIndex.clamp(0, photos.length - 1);
+
+                    if (_currentIndex > 0) {
+                      precacheImage(
+                        FileImage(File(photos[_currentIndex - 1].path)),
+                        context,
+                      );
+                    }
+                    if (_currentIndex < photos.length - 1) {
+                      precacheImage(
+                        FileImage(File(photos[_currentIndex + 1].path)),
+                        context,
+                      );
+                    }
+
+                    if (_pageController.hasClients) {
+                      _pageController.animateToPage(
+                        _currentIndex,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
                   }
                 }
               });
@@ -99,42 +130,30 @@ class _PictureScreenState extends State<PictureScreen> {
           },
 
           builder: (context, state) {
-            final paths = state.photoPathsList ?? [];
+            final photos = state.photos?.photosList ?? [];
 
-            if (paths.isEmpty) {
-              return const Center(child: Text('No photos yet'));
-            }
+            if (photos.isNotEmpty) {
+              return PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) => setState(() => _currentIndex = index),
+                itemCount: photos.length,
+                itemBuilder: (context, index) {
+                  final path = photos[index].path;
 
-            if (_currentIndex == 0 && paths.contains(widget.picturePath)) {
-              _currentIndex = paths.indexOf(widget.picturePath);
-              _pageController = PageController(initialPage: _currentIndex);
-            }
-
-            if (_currentIndex > 0) {
-              precacheImage(FileImage(File(paths[_currentIndex - 1])), context);
-            }
-            if (_currentIndex < paths.length - 1) {
-              precacheImage(FileImage(File(paths[_currentIndex + 1])), context);
-            }
-
-            return PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) => setState(() => _currentIndex = index),
-              itemCount: paths.length,
-              itemBuilder: (context, index) {
-                final path = paths[index];
-
-                return Center(
-                  child: PhotoView(
-                    imageProvider: FileImage(File(path)),
-                    heroAttributes: PhotoViewHeroAttributes(tag: path),
-                    backgroundDecoration: const BoxDecoration(
-                      color: Colors.transparent,
+                  return Center(
+                    child: PhotoView(
+                      imageProvider: FileImage(File(path)),
+                      heroAttributes: PhotoViewHeroAttributes(tag: path),
+                      backgroundDecoration: const BoxDecoration(
+                        color: Colors.transparent,
+                      ),
                     ),
-                  ),
-                );
-              },
-            );
+                  );
+                },
+              );
+            }
+
+            return const SizedBox.shrink();
           },
         ),
       ),

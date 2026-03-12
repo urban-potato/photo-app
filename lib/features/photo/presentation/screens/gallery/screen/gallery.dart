@@ -58,17 +58,16 @@ class GalleryScreen extends StatelessWidget {
     required PhotoState state,
     required ResponsiveSizeCubit responsive,
   }) {
-    final photoPathsList = state.photoPathsList;
+    final photos = state.photos?.photosList;
     bool needsSliverWrapper = true;
 
     Widget content = const MessageView(message: 'Woops, something went wrong');
 
-    if (photoPathsList != null) {
-      if (photoPathsList.isEmpty) {
+    if (photos != null) {
+      if (photos.isEmpty) {
         content = const MessageView(message: 'No photos yet');
       } else {
-        content = PhotosList(photoPathsList: photoPathsList);
-
+        content = PhotosList(photos: photos);
         needsSliverWrapper = false;
       }
     } else if (state is PhotoInitial || state is PhotoLoading) {

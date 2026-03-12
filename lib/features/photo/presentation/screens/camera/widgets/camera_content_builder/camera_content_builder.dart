@@ -150,8 +150,8 @@ class CameraContentBuilder extends StatelessWidget {
         },
       );
     } else if (state is CameraPictureTaken) {
-      final picture = state.pictureFile;
-      return Center(child: Image.file(picture));
+      final bytes = state.bytes;
+      return Center(child: Image.memory(bytes));
     } else if (state is CameraPictureFailure) {
       return MessageWithButtonView(onPressed: cameraCubit.retryInitialization);
     }

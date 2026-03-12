@@ -34,8 +34,8 @@ class NavigationProvider implements NavigationProviderI {
         router.push(const GalleryRoute());
       case CameraAppRoute():
         router.push(const CameraRoute());
-      case PictureAppRoute(:final picturePath):
-        router.push(PictureRoute(picturePath: picturePath));
+      case PictureAppRoute(:final initialPhoto):
+        router.push(PictureRoute(initialPhoto: initialPhoto));
       case SettingsAppRoute():
         router.push(const SettingsRoute());
     }

@@ -5,7 +5,9 @@ import 'package:talker_flutter/talker_flutter.dart' show Talker;
 
 import '../../features/photo/data/data_sources/photo.dart';
 import '../../features/photo/data/repositpries/photo.dart';
+import '../../features/photo/data/services/index.dart' show ExifService;
 import '../../features/photo/domain/repositories/photo.dart';
+import '../../features/photo/domain/services/index.dart' show ExifServiceI;
 import '../../features/photo/presentation/provider/index.dart' show PhotoCubit;
 import '../../features/photo/presentation/screens/camera/provider/index.dart'
     show CameraCubit;
@@ -31,11 +33,14 @@ void initializeDependencies({required AppConfig config}) {
 
   di.registerSingleton<PhotoDataSource>(PhotoDataSource(talker: di<Talker>()));
 
+  di.registerSingleton<ExifServiceI>(ExifService(talker: di<Talker>()));
+
   di.registerSingleton<PhotoRepositoryI>(
     PhotoRepository(
-      photoDataSource: di<PhotoDataSource>(),
-      preferencesAsync: di<SharedPreferencesAsync>(),
       talker: di<Talker>(),
+      preferencesAsync: di<SharedPreferencesAsync>(),
+      photoDataSource: di<PhotoDataSource>(),
+      exifService: di<ExifServiceI>(),
     ),
   );
 

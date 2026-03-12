@@ -79,11 +79,11 @@ class PhotoFeatureRouteWrapper extends PageRouteInfo<void> {
 class PictureRoute extends PageRouteInfo<PictureRouteArgs> {
   PictureRoute({
     Key? key,
-    required String picturePath,
+    required PhotoItemModelUI initialPhoto,
     List<PageRouteInfo>? children,
   }) : super(
          PictureRoute.name,
-         args: PictureRouteArgs(key: key, picturePath: picturePath),
+         args: PictureRouteArgs(key: key, initialPhoto: initialPhoto),
          initialChildren: children,
        );
 
@@ -93,32 +93,35 @@ class PictureRoute extends PageRouteInfo<PictureRouteArgs> {
     name,
     builder: (data) {
       final args = data.argsAs<PictureRouteArgs>();
-      return PictureScreenWrapper(key: args.key, picturePath: args.picturePath);
+      return PictureScreenWrapper(
+        key: args.key,
+        initialPhoto: args.initialPhoto,
+      );
     },
   );
 }
 
 class PictureRouteArgs {
-  const PictureRouteArgs({this.key, required this.picturePath});
+  const PictureRouteArgs({this.key, required this.initialPhoto});
 
   final Key? key;
 
-  final String picturePath;
+  final PhotoItemModelUI initialPhoto;
 
   @override
   String toString() {
-    return 'PictureRouteArgs{key: $key, picturePath: $picturePath}';
+    return 'PictureRouteArgs{key: $key, initialPhoto: $initialPhoto}';
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! PictureRouteArgs) return false;
-    return key == other.key && picturePath == other.picturePath;
+    return key == other.key && initialPhoto == other.initialPhoto;
   }
 
   @override
-  int get hashCode => key.hashCode ^ picturePath.hashCode;
+  int get hashCode => key.hashCode ^ initialPhoto.hashCode;
 }
 
 /// generated route for

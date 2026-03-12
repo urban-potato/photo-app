@@ -7,12 +7,13 @@ import '../../../../../../../../shared/presentation/providers/responsive_size/in
     show ResponsiveSizeCubit;
 import '../../../../../../../shared/presentation/providers/index.dart'
     show NavigationProviderI, PictureAppRoute;
+import '../../../../models/index.dart' show PhotoItemModelUI;
 import 'utils/grid_config_helper.dart';
 
 class PhotosList extends StatelessWidget {
-  const PhotosList({super.key, required this.photoPathsList});
+  const PhotosList({super.key, required this.photos});
 
-  final List<String> photoPathsList;
+  final List<PhotoItemModelUI> photos;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +35,8 @@ class PhotosList extends StatelessWidget {
         childAspectRatio: config.childAspectRatio,
       ),
       delegate: SliverChildBuilderDelegate((context, index) {
-        final imageFile = File(photoPathsList[index]);
+        final photo = photos[index];
+        final imageFile = File(photo.path);
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(borderRadius),
@@ -51,7 +53,7 @@ class PhotosList extends StatelessWidget {
                       final router = context.read<NavigationProviderI>();
                       router.push(
                         context,
-                        PictureAppRoute(picturePath: imageFile.path),
+                        PictureAppRoute(initialPhoto: photo),
                       );
                     }
                   },
@@ -60,7 +62,7 @@ class PhotosList extends StatelessWidget {
             ),
           ),
         );
-      }, childCount: photoPathsList.length),
+      }, childCount: photos.length),
     );
   }
 }

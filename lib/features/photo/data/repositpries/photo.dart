@@ -1,4 +1,3 @@
-import 'dart:io' show File;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:shared_preferences/shared_preferences.dart'
@@ -6,30 +5,47 @@ import 'package:shared_preferences/shared_preferences.dart'
 import 'package:talker_flutter/talker_flutter.dart' show Talker;
 
 import '../../../../shared/domain/data_states/data_state.dart';
+import '../../domain/models/index.dart'
+    show PhotoModelDomain, PhotoItemModelDomain;
 import '../../domain/repositories/photo.dart';
+import '../../domain/services/index.dart' show ExifServiceI;
 import '../data_sources/photo.dart';
 
 class PhotoRepository implements PhotoRepositoryI {
   const PhotoRepository({
     required SharedPreferencesAsync preferencesAsync,
     required PhotoDataSource photoDataSource,
-    required this.talker,
-  }) : _prefs = preferencesAsync,
-       _photoDataSource = photoDataSource;
+    required Talker talker,
+    required ExifServiceI exifService,
+  }) : _talker = talker,
+       _prefs = preferencesAsync,
+       _photoDataSource = photoDataSource,
+       _exifService = exifService;
 
   static const storageKey = 'photoPaths';
 
-  final Talker talker;
+  final Talker _talker;
   final SharedPreferencesAsync _prefs;
   final PhotoDataSource _photoDataSource;
+  final ExifServiceI _exifService;
 
   @override
-  Future<DataState<List<String>>> getAllPhotoPaths() async {
+  Future<DataState<PhotoModelDomain>> getAllPhotoPaths() async {
     try {
       final photoPathsList = await _prefs.getStringList(storageKey) ?? [];
-      return DataSuccess(data: photoPathsList);
+
+      final List<PhotoItemModelDomain> photosList = [];
+
+      for (final path in photoPathsList) {
+        final dateTime = await _exifService.getCreationDate(path);
+
+        photosList.add(PhotoItemModelDomain(path: path, dateTime: dateTime));
+      }
+
+      final photoModel = PhotoModelDomain(photosList: photosList);
+      return DataSuccess(data: photoModel);
     } catch (e) {
-      talker.error('PhotoRepository Failed to getAllPhotoPaths: $e');
+      _talker.error('PhotoRepository Failed to getAllPhotoPaths: $e');
 
       final exeption = e is Exception ? e : Exception(e.toString());
       return DataFailed(error: exeption);
@@ -37,7 +53,7 @@ class PhotoRepository implements PhotoRepositoryI {
   }
 
   @override
-  Future<DataState<File>> savePhoto(
+  Future<DataState<PhotoModelDomain>> savePhoto(
     Uint8List bytes,
     double targetAspectRatio,
   ) async {
@@ -57,18 +73,29 @@ class PhotoRepository implements PhotoRepositoryI {
             photoPathsList.add(path);
             await _prefs.setStringList(storageKey, photoPathsList);
 
-            return DataSuccess(data: file);
+            final newPhotosDataState = await getAllPhotoPaths();
+
+            if (newPhotosDataState is DataSuccess) {
+              return DataSuccess(data: newPhotosDataState.data!);
+            }
+
+            final exeption = dataState.error!;
+            _talker.error(
+              'PhotoRepository Failed to getAppPhotos after savePhoto: $exeption',
+            );
+
+            return DataFailed(error: exeption);
           }
         case (DataFailed _):
           {
             final exeption = dataState.error!;
-            talker.error('PhotoRepository Failed to savePhoto: $exeption');
+            _talker.error('PhotoRepository Failed to savePhoto: $exeption');
 
             return DataFailed(error: exeption);
           }
       }
     } catch (e) {
-      talker.error('PhotoRepository Failed to savePhotoPath: $e');
+      _talker.error('PhotoRepository Failed to savePhotoPath: $e');
 
       final exeption = e is Exception ? e : Exception(e.toString());
       return DataFailed(error: exeption);
@@ -76,7 +103,7 @@ class PhotoRepository implements PhotoRepositoryI {
   }
 
   @override
-  Future<DataState<String>> deletePhoto(String path) async {
+  Future<DataState<PhotoModelDomain>> deletePhoto(String path) async {
     try {
       final dataState = await _photoDataSource.deletePhoto(path);
 
@@ -86,14 +113,26 @@ class PhotoRepository implements PhotoRepositoryI {
             final deletedPath = dataState.data!;
 
             final photoPathsList = await _prefs.getStringList(storageKey) ?? [];
-            final result = photoPathsList.remove(deletedPath);
+            final isRemoved = photoPathsList.remove(deletedPath);
 
-            if (result) {
+            if (isRemoved) {
               await _prefs.setStringList(storageKey, photoPathsList);
-              return DataSuccess(data: deletedPath);
+
+              final newPhotosDataState = await getAllPhotoPaths();
+
+              if (newPhotosDataState is DataSuccess) {
+                return DataSuccess(data: newPhotosDataState.data!);
+              }
+
+              final exeption = dataState.error!;
+              _talker.error(
+                'PhotoRepository Failed to getAppPhotos after savePhoto: $exeption',
+              );
+
+              return DataFailed(error: exeption);
             } else {
-              talker.warning(
-                'PhotoRepository Failed to deletePhotoPath: Path not found',
+              _talker.warning(
+                'PhotoRepository Failed to deletePhotoPath from prefs: Path not found',
               );
               return DataFailed(error: Exception('Path not found'));
             }
@@ -101,13 +140,13 @@ class PhotoRepository implements PhotoRepositoryI {
         case (DataFailed _):
           {
             final exeption = dataState.error!;
-            talker.error('PhotoRepository Failed to deletePhoto: $exeption');
+            _talker.error('PhotoRepository Failed to deletePhoto: $exeption');
 
             return DataFailed(error: exeption);
           }
       }
     } catch (e) {
-      talker.error('PhotoRepository Failed to deletePhotoPath: $e');
+      _talker.error('PhotoRepository Failed to deletePhotoPath: $e');
 
       final exeption = e is Exception ? e : Exception(e.toString());
       return DataFailed(error: exeption);

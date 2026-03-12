@@ -358,7 +358,7 @@ class CameraCubit extends Cubit<CameraState>
       }
 
       if (dataState is DataSuccess) {
-        safeEmit(CameraPictureTaken(pictureFile: dataState.data!));
+        safeEmit(CameraPictureTaken(bytes: bytes));
       } else {
         safeEmit(const CameraPictureFailure());
         // await setupCamera(_selectedIndex);

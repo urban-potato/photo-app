@@ -3,6 +3,7 @@ import 'package:synchronized/synchronized.dart';
 
 import '../../../../shared/domain/data_states/data_state.dart';
 import '../../domain/repositories/photo.dart';
+import '../mappers/index.dart' show PhotoModelDomainExtension;
 import 'photo_state.dart';
 import 'types/index.dart';
 
@@ -17,15 +18,15 @@ class PhotoCubit extends Cubit<PhotoState> {
 
   Future<void> deletePhoto(String photoPath) async {
     return await _lock.synchronized(() async {
-      final photoPathsList = state.photoPathsList;
-      emit(PhotoLoading(photoPathsList: photoPathsList));
+      final photos = state.photos;
+      emit(PhotoLoading(photos: photos));
 
       final dataState = await _photoRepository.deletePhoto(photoPath);
       if (isClosed) return;
 
       if (dataState is DataSuccess) {
-        emit(const PhotoDeleteSuccess());
-        await _loadPhotoPaths();
+        final photos = dataState.data!.toModelUi();
+        emit(PhotoLoaded(photos: photos));
       } else {
         final error = dataState.error;
         final typedError = TypedError(
@@ -33,7 +34,7 @@ class PhotoCubit extends Cubit<PhotoState> {
           error: error,
         );
 
-        emit(PhotoFailure(error: typedError, photoPathsList: photoPathsList));
+        emit(PhotoFailure(error: typedError, photos: photos));
       }
     });
   }
@@ -45,19 +46,20 @@ class PhotoCubit extends Cubit<PhotoState> {
   }
 
   Future<void> _loadPhotoPaths() async {
-    final photoPathsList = state.photoPathsList;
-    emit(PhotoLoading(photoPathsList: photoPathsList));
+    final photos = state.photos;
+    emit(PhotoLoading(photos: photos));
 
     final dataState = await _photoRepository.getAllPhotoPaths();
     if (isClosed) return;
 
     if (dataState is DataSuccess) {
-      emit(PhotoLoaded(photoPathsList: dataState.data));
+      final modelUi = dataState.data?.toModelUi();
+      emit(PhotoLoaded(photos: modelUi));
     } else {
       final error = dataState.error;
       final typedError = TypedError(type: PhotoErrorType.load, error: error);
 
-      emit(PhotoFailure(error: typedError, photoPathsList: photoPathsList));
+      emit(PhotoFailure(error: typedError, photos: photos));
     }
   }
 }

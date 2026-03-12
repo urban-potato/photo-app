@@ -1,4 +1,4 @@
-import 'dart:io' show File;
+import 'dart:typed_data' show Uint8List;
 
 import 'package:equatable/equatable.dart';
 
@@ -89,12 +89,12 @@ class CameraFailure extends CameraState {
 }
 
 class CameraPictureTaken extends CameraState {
-  final File pictureFile;
+  final Uint8List bytes;
 
-  const CameraPictureTaken({required this.pictureFile});
+  const CameraPictureTaken({required this.bytes});
 
   @override
-  List<Object?> get props => [pictureFile];
+  List<Object?> get props => [bytes];
 }
 
 class CameraPictureFailure extends CameraState {

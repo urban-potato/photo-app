@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../themed_text/themed_text.dart';
 
 class MessageView extends StatelessWidget {
-  const MessageView({super.key, required this.message});
+  const MessageView({super.key, this.message = 'Woops, something went wrong'});
 
   final String message;
 

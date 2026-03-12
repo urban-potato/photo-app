@@ -1,6 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/widgets.dart' show Key;
 
+import '../../features/photo/presentation/models/index.dart'
+    show PhotoItemModelUI;
 import '../../shared/presentation/providers/navigation/index.dart'
     show RoutePath;
 import 'wrappers/index.dart';

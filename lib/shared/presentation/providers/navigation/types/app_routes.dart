@@ -1,3 +1,6 @@
+import '../../../../../features/photo/presentation/models/index.dart'
+    show PhotoItemModelUI;
+
 sealed class AppRoute {
   const AppRoute();
 }
@@ -11,9 +14,9 @@ class CameraAppRoute extends AppRoute {
 }
 
 class PictureAppRoute extends AppRoute {
-  const PictureAppRoute({required this.picturePath});
+  const PictureAppRoute({required this.initialPhoto});
 
-  final String picturePath;
+  final PhotoItemModelUI initialPhoto;
 }
 
 class SettingsAppRoute extends AppRoute {
