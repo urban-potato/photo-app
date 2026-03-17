@@ -7,10 +7,10 @@ import 'package:talker_flutter/talker_flutter.dart' show Talker;
 
 import '../camera_state.dart';
 
-abstract class CameraLifecycleHost {
+abstract interface class CameraLifecycleHost {
   bool get isRequestingPermission;
   int get selectedIndex;
-  dynamic get state;
+  CameraState get state;
   bool get isCapturing;
   Completer<void>? get captureCompleter;
   Talker get talker;

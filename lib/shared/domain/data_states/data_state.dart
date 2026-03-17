@@ -6,9 +6,9 @@ sealed class DataState<T> {
 }
 
 class DataSuccess<T> extends DataState<T> {
-  const DataSuccess({required T data}) : super(data: data);
+  const DataSuccess({required T super.data});
 }
 
 class DataFailed<T> extends DataState<T> {
-  const DataFailed({required Exception error}) : super(error: error);
+  const DataFailed({required Exception super.error});
 }
